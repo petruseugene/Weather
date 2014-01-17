@@ -24,15 +24,22 @@
         android:textSize="18dp"
         android:layout_marginBottom="5dp"
         android:text="is connected? " />
- 
+
+    <Button
+        android:id="@+id/button_get_weather"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/etResponse"
+        android:layout_alignTop="@+id/tvIsConnected"
+        android:text="Receive" />
+
     <EditText
         android:id="@+id/etResponse"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/button_get_weather"
         android:ems="10"
-        android:layout_marginTop="30dp"
-        android:inputType="textMultiLine" >\
-        <requestFocus />
-    </EditText>
+        android:inputType="textMultiLine" />
 
 </RelativeLayout>

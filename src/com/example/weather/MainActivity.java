@@ -21,7 +21,9 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -79,8 +81,13 @@ public class MainActivity extends Activity {
             tvIsConnected.setText("You are NOT conncted");
         }
  
-        // call AsynTask to perform network operation on separate thread
-        new HttpAsyncTask().execute(getURL);
+        Button button= (Button) findViewById(R.id.button_get_weather);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            	new HttpAsyncTask().execute(getURL);
+            }
+        });
 	    
 	}
 
