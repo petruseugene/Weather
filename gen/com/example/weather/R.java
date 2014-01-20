@@ -140,17 +140,20 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int shadow=0x7f020001;
     }
     public static final class id {
-        public static final int action_settings=0x7f05000c;
+        public static final int ButtonCityList=0x7f05000c;
+        public static final int action_settings=0x7f05000f;
         public static final int button_get_weather=0x7f050007;
         public static final int etResponse=0x7f050008;
         public static final int fullscreen=0x7f050003;
         public static final int hello_textview=0x7f050005;
         public static final int left=0x7f050000;
-        public static final int left_menu_listView=0x7f05000a;
+        public static final int left_menu_listView=0x7f05000d;
         public static final int margin=0x7f050002;
+        public static final int progressBar1=0x7f05000a;
         public static final int right=0x7f050001;
+        public static final int scrollView1=0x7f05000b;
         public static final int selected_view=0x7f050004;
-        public static final int slidingmenumain=0x7f05000b;
+        public static final int slidingmenumain=0x7f05000e;
         public static final int textViewAppName=0x7f050009;
         public static final int tvIsConnected=0x7f050006;
     }
