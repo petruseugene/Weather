@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         android:layout_alignRight="@+id/etResponse"
         android:layout_alignTop="@+id/tvIsConnected"
-        android:text="Receive" />
+        android:text="Update" />
 
     <EditText
         android:id="@+id/etResponse"

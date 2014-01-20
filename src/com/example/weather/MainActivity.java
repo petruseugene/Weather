@@ -37,7 +37,8 @@ public class MainActivity extends Activity {
 			"Костя", "Игорь", "Анна", "Денис", "Андрей" };
 	
 	public static String baseURL = "http://api.openweathermap.org/data/2.5/weather";
-	public static String getURL  = "http://api.openweathermap.org/data/2.5/weather?id=2172797";
+	public static int cityId	 = 2172797;
+	
 	EditText etResponse;
 	TextView tvIsConnected;
 
@@ -78,17 +79,22 @@ public class MainActivity extends Activity {
 		if (isConnected()) {
 			tvIsConnected.setBackgroundColor(0xFF00CC00);
 			tvIsConnected.setText("You are conncted");
+			
+			updateWeatherData("id=" + cityId);
+			
 		} else {
 			tvIsConnected.setText("You are NOT conncted");
 		}
 		
-		updateWeatherData("id=2172797");
+		
 
 		Button button = (Button) findViewById(R.id.button_get_weather);
 		button.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				updateWeatherData("id=2172797");
+				if (isConnected()) {
+					updateWeatherData("id=" + cityId);
+				}
 			}
 		});
 
@@ -117,26 +123,20 @@ public class MainActivity extends Activity {
 		InputStream inputStream = null;
 		String result = "";
 		try {
-
 			// create HttpClient
 			HttpClient httpclient = new DefaultHttpClient();
-
 			// make GET request to the given URL
 			HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
-
 			// receive response as inputStream
 			inputStream = httpResponse.getEntity().getContent();
-
 			// convert inputstream to string
 			if (inputStream != null)
 				result = convertInputStreamToString(inputStream);
 			else
 				result = "Did not work!";
-
 		} catch (Exception e) {
 			Log.d("InputStream", e.getLocalizedMessage());
 		}
-
 		return result;
 	}
 
@@ -149,7 +149,6 @@ public class MainActivity extends Activity {
 		String result = "";
 		while ((line = bufferedReader.readLine()) != null)
 			result += line;
-
 		inputStream.close();
 		return result;
 
@@ -169,14 +168,13 @@ public class MainActivity extends Activity {
 	private class HttpAsyncTask extends AsyncTask<String, Void, String> {
 		@Override
 		protected String doInBackground(String... urls) {
-
 			return GET(urls[0]);
 		}
 
 		// onPostExecute displays the results of the AsyncTask.
 		@Override
 		protected void onPostExecute(String result) {
-			Toast.makeText(getBaseContext(), "Received!", Toast.LENGTH_LONG).show();
+			Toast.makeText(getBaseContext(), "Updated!", Toast.LENGTH_LONG).show();
 			try {
 				JSONObject json = new JSONObject(result);
 				JSONArray articles = json.getJSONArray("weather");
