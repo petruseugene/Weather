@@ -25,25 +25,21 @@ public class MainActivity extends Activity {
 	public static String[] names = { "Иван", "Марья", "Петр", "Антон", "Даша", "Борис",
 			"Костя", "Игорь", "Анна", "Денис", "Андрей" };
 	
+	private static int currentCityId = 5128638; 
+	private Cursor cur;
 	
 	TextView cityName;
 	TextView cityWeather;
 	TextView cityTemp;
 	TextView cityDate;
-
-	public static final int TAG = 1;
 	
 	public SlidingMenu menu;
 	
 	
-	final String LOG_TAG = "myLogs";
+	final String LOG_TAG = "WeatherLogs";
 
-	  final Uri CONTACT_URI = Uri
-	      .parse("content://ru.startandroid.providers.AdressBook/contacts");
+	final Uri CONTACT_URI = Uri.parse("content://ru.startandroid.providers.AdressBook/contacts");
 	  
-	  final String CONTACT_NAME = "name";
-	  final String CONTACT_EMAIL = "email";
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -72,7 +68,7 @@ public class MainActivity extends Activity {
 		//lvMain.setAdapter(adapter);
 
 		
-			updateWeatherData();
+			getWeatherData();
 			
 		
 		cityName = (TextView) findViewById(R.id.city_weather_name);
@@ -84,7 +80,7 @@ public class MainActivity extends Activity {
 		button.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-					updateWeatherData();
+					getWeatherData();
 			}
 		});
 		
@@ -96,17 +92,31 @@ public class MainActivity extends Activity {
 			}
 		});
 		
-		ContentResolver cr = getContentResolver();
-		Cursor cur = cr.query(WeatherContentProvider.WEATHER_CONTENT_URI, null, null, null, null);
-		    //startManagingCursor(cur);
-		if(cur.moveToFirst()){
-			do{
-				cityName.setText(cur.getString(2));
-			} while( cur.moveToNext() );
-		}
+		updateForecast();
+		
 	}
 	
-	public void updateWeatherData(){
+	public void updateForecast(){
+		
+		if(currentCityId>0){
+			cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI, 
+											 null,
+											 WeatherDB.Cities.CITY_ID + " = " + currentCityId , null, null);
+			if(cur.moveToFirst()){
+				do{
+					cityName.setText(cur.getString(WeatherDB.Cities.CITY_NAME_KEY));
+					cityTemp.setText(cur.getString(WeatherDB.Cities.TEMPERATURE_KEY));
+					cityWeather.setText(cur.getString(WeatherDB.Cities.WEATHER_KEY));
+					cityDate.setText(cur.getString(WeatherDB.Cities.TIME_KEY));
+				} while( cur.moveToNext() );
+			}
+		} else {
+			
+		}
+		cur.close();
+	}
+	
+	public void getWeatherData(){
 		startService(new Intent(this, GetWeatherService.class));
 	}
 

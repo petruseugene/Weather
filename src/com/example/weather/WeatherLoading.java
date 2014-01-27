@@ -11,9 +11,6 @@ import android.widget.TextView;
 
 public class WeatherLoading extends Activity {
 
-	String[] names = { "Иван", "Марья", "Петр", "Антон", "Даша", "Борис",
-			"Костя", "Игорь", "Анна", "Денис", "Андрей" };
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

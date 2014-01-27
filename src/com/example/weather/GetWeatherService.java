@@ -129,7 +129,7 @@ public class GetWeatherService extends Service {
 				//cityTemp.setText(jsonMain.getString("temp"));
 				//Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
 				//cityDate.setText(new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
-				Toast.makeText(getBaseContext(), json.getString("name"), Toast.LENGTH_LONG).show();
+				//Toast.makeText(getBaseContext(), json.getString("name"), Toast.LENGTH_LONG).show();
 				
 				Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
 				
@@ -139,6 +139,7 @@ public class GetWeatherService extends Service {
 				newValues.put(WeatherDB.Cities.CITY_ID, "5128638");
 				newValues.put(WeatherDB.Cities.CITY_NAME, json.getString("name"));
 				newValues.put(WeatherDB.Cities.COUNTRY, "US");
+				newValues.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
 				newValues.put(WeatherDB.Cities.TEMPERATURE, jsonMain.getString("temp"));
 				newValues.put(WeatherDB.Cities.WEATHER, jsonArr.getJSONObject(0).getString("description"));
 				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
