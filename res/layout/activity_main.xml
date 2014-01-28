@@ -4,23 +4,33 @@
     android:layout_height="match_parent"
     android:orientation="vertical"  >
     
-    <Button
-        android:id="@+id/menu_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Menu" />
+
+
+	    <Button
+	        android:id="@+id/menu_button"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="left"
+	        android:text="Menu" />
+
+	    <Button
+	        android:id="@+id/button_get_weather"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="right"
+	        android:text="Update" />
+
     
     <TextView
         android:id="@+id/city_weather_name"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"    
         android:background="#FFFFFF"
         android:textColor="#000"
         android:textAlignment="center"
         android:textSize="25dp"
         android:layout_margin="5dp"
-        android:text="Ciry name" />
+        android:text="City name" />
     
     <TextView
         android:id="@+id/city_weather_condition"
@@ -38,13 +48,13 @@
         android:id="@+id/city_temperature"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"    
-        android:background="#FFFFFF"
-        android:textColor="#000"
-        android:textAlignment="center"
-        android:textSize="20dp"
+        android:layout_gravity="center"
         android:layout_margin="5dp"
-        android:text="Temperature" />
+        android:background="#FFFFFF"
+        android:text="Temperature"
+        android:textAlignment="center"
+        android:textColor="#000"
+        android:textSize="20dp" />
 
     <TextView
         android:id="@+id/city_date"
@@ -53,17 +63,9 @@
         android:layout_marginBottom="5dp"
         android:layout_marginTop="5dp"
         android:background="#FFFFFF"
-        android:text="date"
+        android:text="Forecast date"
         android:textAlignment="center"
         android:textColor="#000"
         android:textSize="20dp"/>
-
-    <Button
-        android:id="@+id/button_get_weather"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignRight="@+id/etResponse"
-        android:layout_alignTop="@+id/tvIsConnected"
-        android:text="Update" />
 
 </LinearLayout>

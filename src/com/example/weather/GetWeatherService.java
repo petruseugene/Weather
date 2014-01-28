@@ -30,36 +30,36 @@ import android.widget.Toast;
 
 public class GetWeatherService extends Service {
 	
+	
 	final String LOG_TAG = "GetWeatherServiceLogs";
+	private int cityId = 0;
+	
 	
 	public void onCreate() {
 	    super.onCreate();
-	    //Log.d(LOG_TAG, "onCreate");
 	}
 	  
+	
 	public int onStartCommand(Intent intent, int flags, int startId) {
-	    //Log.d(LOG_TAG, "onStartCommand");
-	    //Get weather Thread
-	    someTask();
+		cityId = intent.getIntExtra("cityId", 5128638);
+	    getWeather();
 	    return super.onStartCommand(intent, flags, startId);
 	}
 
 	
 	public void onDestroy() {
 	    super.onDestroy();
-	    Log.d(LOG_TAG, "onDestroy");
 	}
 	
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	
-	private void someTask() {
-		new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=5128638&units=metric");
+	private void getWeather() {
+		new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
 	}
 	
 	
@@ -67,13 +67,9 @@ public class GetWeatherService extends Service {
 		InputStream inputStream = null;
 		String result = "";
 		try {
-			// create HttpClient
 			HttpClient httpclient = new DefaultHttpClient();
-			// make GET request to the given URL
 			HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
-			// receive response as inputStream
 			inputStream = httpResponse.getEntity().getContent();
-			// convert inputstream to string
 			if (inputStream != null) {
 				result = convertInputStreamToString(inputStream);
 			} else {
@@ -91,8 +87,7 @@ public class GetWeatherService extends Service {
 		BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
 		String line = "";
 		String result = "";
-		while ((line = bufferedReader.readLine()) != null)
-			result += line;
+		while ((line = bufferedReader.readLine()) != null) result += line;
 		inputStream.close();
 		return result;
 
@@ -115,10 +110,8 @@ public class GetWeatherService extends Service {
 			return GET(urls[0]);
 		}
 
-		// onPostExecute displays the results of the AsyncTask.
 		@Override
 		protected void onPostExecute(String result) {
-			Toast.makeText(getBaseContext(), "Updated!", Toast.LENGTH_LONG).show();
 			try {
 				JSONObject json = new JSONObject(result);
 				JSONArray jsonArr = json.getJSONArray("weather");
@@ -145,8 +138,12 @@ public class GetWeatherService extends Service {
 				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
 				newValues.put(WeatherDB.Cities.ICON, "ico90.png");
 				
-				Uri myRowUri = cr.insert(WeatherContentProvider.WEATHER_CONTENT_URI, newValues);
+				int myRowUri = cr.update(WeatherContentProvider.WEATHER_CONTENT_URI, 
+										 newValues,
+										 WeatherDB.Cities.CITY_ID + " = " + cityId,
+										 null);
 				
+				Toast.makeText(getBaseContext(), "Updated!", Toast.LENGTH_LONG).show();
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

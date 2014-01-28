@@ -58,14 +58,13 @@ public class MainActivity extends Activity {
 		menu.setMenu(R.layout.main_menu);
 
 		// находим список
-		//ListView lvMain = (ListView) findViewById(R.id.left_menu_listView);
+		ListView lvMain = (ListView) findViewById(R.id.left_menu_listView);
 
 		// создаем адаптер
-		//ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-		//		android.R.layout.simple_list_item_1, names);
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names);
 
 		// присваиваем адаптер списку
-		//lvMain.setAdapter(adapter);
+		lvMain.setAdapter(adapter);
 
 		
 			getWeatherData();
@@ -92,14 +91,14 @@ public class MainActivity extends Activity {
 			}
 		});
 		
-		updateForecast();
+		updateCityForecast();
 		
 	}
 	
-	public void updateForecast(){
+	public void updateCityForecast(){
 		
 		if(currentCityId>0){
-			cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI, 
+			cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI,
 											 null,
 											 WeatherDB.Cities.CITY_ID + " = " + currentCityId , null, null);
 			if(cur.moveToFirst()){
@@ -117,7 +116,7 @@ public class MainActivity extends Activity {
 	}
 	
 	public void getWeatherData(){
-		startService(new Intent(this, GetWeatherService.class));
+		startService(new Intent(this, GetWeatherService.class).putExtra("cityId", currentCityId));
 	}
 
 	
