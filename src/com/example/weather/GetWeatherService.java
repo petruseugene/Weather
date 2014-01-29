@@ -20,19 +20,21 @@ import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 public class GetWeatherService extends Service {
 	
 	
 	final String LOG_TAG = "GetWeatherServiceLogs";
-	private int cityId = 0;
+	private static int cityId = 0;
+	private static int action_type = 0;
+	private String search_query = "";
 	
 	
 	public void onCreate() {
@@ -42,6 +44,7 @@ public class GetWeatherService extends Service {
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		cityId = intent.getIntExtra("cityId", 5128638);
+		action_type = intent.getIntExtra("action", 0);
 	    getWeather();
 	    return super.onStartCommand(intent, flags, startId);
 	}
@@ -59,24 +62,33 @@ public class GetWeatherService extends Service {
 	
 	
 	private void getWeather() {
-		new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
+		switch(action_type){
+			case 0:{
+				new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
+			}break;
+			case 1:{
+				new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/find?q=" + search_query + "&mode=json");
+			}break;
+		}
 	}
 	
 	
-	public static String GET(String url) {
+	public String GET(String url) {
 		InputStream inputStream = null;
 		String result = "";
-		try {
-			HttpClient httpclient = new DefaultHttpClient();
-			HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
-			inputStream = httpResponse.getEntity().getContent();
-			if (inputStream != null) {
-				result = convertInputStreamToString(inputStream);
-			} else {
-				result = "Did not work!";
+		if(isConnected()){
+			try {
+				HttpClient httpclient = new DefaultHttpClient();
+				HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
+				inputStream = httpResponse.getEntity().getContent();
+				if (inputStream != null) {
+					result = convertInputStreamToString(inputStream);
+				} else {
+					result = "Did not work!";
+				}
+			} catch (Exception e) {
+				Log.d("InputStream", e.getLocalizedMessage());
 			}
-		} catch (Exception e) {
-			Log.d("InputStream", e.getLocalizedMessage());
 		}
 		return result;
 	}
@@ -112,21 +124,38 @@ public class GetWeatherService extends Service {
 
 		@Override
 		protected void onPostExecute(String result) {
-			try {
-				JSONObject json = new JSONObject(result);
-				JSONArray jsonArr = json.getJSONArray("weather");
-				
-				//cityName.setText(json.getString("name"));
-				//cityWeather.setText(jsonArr.getJSONObject(0).getString("description"));
-				JSONObject jsonMain = new JSONObject(json.getString("main"));
-				//cityTemp.setText(jsonMain.getString("temp"));
-				//Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
-				//cityDate.setText(new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
-				//Toast.makeText(getBaseContext(), json.getString("name"), Toast.LENGTH_LONG).show();
-				
-				Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
-				
-				ContentResolver cr = getContentResolver();
+			switch(action_type){
+				case 0:{
+					updateCityForecast(result);
+				}break;
+				case 1:{
+					new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/find?q=" + search_query + "&mode=json");
+				}break;
+				default:{
+					
+				}
+			}
+			
+		}
+	}
+	
+	
+	public void updateCityForecast(String result){
+		try {
+			JSONObject json = new JSONObject(result);
+			JSONArray jsonArr = json.getJSONArray("weather");
+			
+			JSONObject jsonMain = new JSONObject(json.getString("main"));
+			
+			Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
+			
+			ContentResolver cr = getContentResolver();
+			Cursor c = cr.query(WeatherContentProvider.WEATHER_CONTENT_URI,
+					 null,
+					 WeatherDB.Cities.CITY_ID + " = " + cityId,
+					 null,
+					 null);
+			if(c.getCount()>0){
 				ContentValues newValues = new ContentValues();
 				
 				newValues.put(WeatherDB.Cities.CITY_ID, "5128638");
@@ -142,14 +171,72 @@ public class GetWeatherService extends Service {
 										 newValues,
 										 WeatherDB.Cities.CITY_ID + " = " + cityId,
 										 null);
-				
-				Toast.makeText(getBaseContext(), "Updated!", Toast.LENGTH_LONG).show();
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Log.e("error", e.toString());
+				Log.d(LOG_TAG, "myRowUri = " + myRowUri);
+				sendBroadcastService(true);
+			} else {
+				sendBroadcastService(false);
 			}
+			
+			this.finalize();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (Throwable e) {
+			e.printStackTrace();
 		}
 	}
+	
+	
+	public void searchQuery(String result){
+		try {
+			JSONObject json = new JSONObject(result);
+			JSONArray jsonArr = json.getJSONArray("weather");
+			
+			JSONObject jsonMain = new JSONObject(json.getString("main"));
+			
+			Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
+			
+			ContentResolver cr = getContentResolver();
+			Cursor c = cr.query(WeatherContentProvider.WEATHER_CONTENT_URI,
+					 null,
+					 WeatherDB.Cities.CITY_ID + " = " + cityId,
+					 null,
+					 null);
+			if(c.getCount()>0){
+				ContentValues newValues = new ContentValues();
+				
+				newValues.put(WeatherDB.Cities.CITY_ID, "5128638");
+				newValues.put(WeatherDB.Cities.CITY_NAME, json.getString("name"));
+				newValues.put(WeatherDB.Cities.COUNTRY, "US");
+				newValues.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
+				newValues.put(WeatherDB.Cities.TEMPERATURE, jsonMain.getString("temp"));
+				newValues.put(WeatherDB.Cities.WEATHER, jsonArr.getJSONObject(0).getString("description"));
+				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
+				newValues.put(WeatherDB.Cities.ICON, "ico90.png");
+				
+				int myRowUri = cr.update(WeatherContentProvider.WEATHER_CONTENT_URI, 
+										 newValues,
+										 WeatherDB.Cities.CITY_ID + " = " + cityId,
+										 null);
+				Log.d(LOG_TAG, "myRowUri = " + myRowUri);
+				sendBroadcastService(true);
+			} else {
+				sendBroadcastService(false);
+			}
+			
+			this.finalize();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	public void sendBroadcastService(boolean update) {  
+		Intent intent = new Intent("custom-event-name");
+		intent.putExtra("update", true);
+		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+	    Log.d(LOG_TAG, "update = " + update);
+	}  
 
 }

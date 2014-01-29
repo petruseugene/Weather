@@ -211,7 +211,7 @@ public class WeatherContentProvider extends ContentProvider {
 	      db.execSQL(DB_CREATE);
 	      ContentValues cv = new ContentValues();
 	      for (int i = 1; i <= 3; i++) {
-	        cv.put(WeatherDB.Cities.CITY_ID, i*100+"");
+	        cv.put(WeatherDB.Cities.CITY_ID, "5128638");
 	        cv.put(WeatherDB.Cities.CITY_NAME, "NYrk");
 	        cv.put(WeatherDB.Cities.COUNTRY, "US");
 	        if(i==1)cv.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
