@@ -35,6 +35,7 @@
         </activity>
         <service android:name="GetWeatherService"></service>
         <provider android:name="WeatherContentProvider" android:authorities="com.example.weather.provider"></provider>
+        <activity android:name="AddNewCity"></activity>
     </application>
 
 </manifest>

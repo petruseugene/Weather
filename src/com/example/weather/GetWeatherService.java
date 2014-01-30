@@ -33,8 +33,6 @@ public class GetWeatherService extends Service {
 	
 	final String LOG_TAG = "GetWeatherServiceLogs";
 	private static int cityId = 0;
-	private static int action_type = 0;
-	private String search_query = "";
 	
 	
 	public void onCreate() {
@@ -44,7 +42,6 @@ public class GetWeatherService extends Service {
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		cityId = intent.getIntExtra("cityId", 5128638);
-		action_type = intent.getIntExtra("action", 0);
 	    getWeather();
 	    return super.onStartCommand(intent, flags, startId);
 	}
@@ -62,14 +59,7 @@ public class GetWeatherService extends Service {
 	
 	
 	private void getWeather() {
-		switch(action_type){
-			case 0:{
-				new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
-			}break;
-			case 1:{
-				new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/find?q=" + search_query + "&mode=json");
-			}break;
-		}
+		new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
 	}
 	
 	
@@ -124,69 +114,12 @@ public class GetWeatherService extends Service {
 
 		@Override
 		protected void onPostExecute(String result) {
-			switch(action_type){
-				case 0:{
-					updateCityForecast(result);
-				}break;
-				case 1:{
-					new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/find?q=" + search_query + "&mode=json");
-				}break;
-				default:{
-					
-				}
-			}
-			
+			updateCityForecast(result);
 		}
 	}
 	
 	
 	public void updateCityForecast(String result){
-		try {
-			JSONObject json = new JSONObject(result);
-			JSONArray jsonArr = json.getJSONArray("weather");
-			
-			JSONObject jsonMain = new JSONObject(json.getString("main"));
-			
-			Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
-			
-			ContentResolver cr = getContentResolver();
-			Cursor c = cr.query(WeatherContentProvider.WEATHER_CONTENT_URI,
-					 null,
-					 WeatherDB.Cities.CITY_ID + " = " + cityId,
-					 null,
-					 null);
-			if(c.getCount()>0){
-				ContentValues newValues = new ContentValues();
-				
-				newValues.put(WeatherDB.Cities.CITY_ID, "5128638");
-				newValues.put(WeatherDB.Cities.CITY_NAME, json.getString("name"));
-				newValues.put(WeatherDB.Cities.COUNTRY, "US");
-				newValues.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
-				newValues.put(WeatherDB.Cities.TEMPERATURE, jsonMain.getString("temp"));
-				newValues.put(WeatherDB.Cities.WEATHER, jsonArr.getJSONObject(0).getString("description"));
-				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
-				newValues.put(WeatherDB.Cities.ICON, "ico90.png");
-				
-				int myRowUri = cr.update(WeatherContentProvider.WEATHER_CONTENT_URI, 
-										 newValues,
-										 WeatherDB.Cities.CITY_ID + " = " + cityId,
-										 null);
-				Log.d(LOG_TAG, "myRowUri = " + myRowUri);
-				sendBroadcastService(true);
-			} else {
-				sendBroadcastService(false);
-			}
-			
-			this.finalize();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		} catch (Throwable e) {
-			e.printStackTrace();
-		}
-	}
-	
-	
-	public void searchQuery(String result){
 		try {
 			JSONObject json = new JSONObject(result);
 			JSONArray jsonArr = json.getJSONArray("weather");

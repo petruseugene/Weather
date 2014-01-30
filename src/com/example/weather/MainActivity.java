@@ -10,9 +10,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -21,7 +21,7 @@ import android.widget.Toast;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements OnClickListener{
 
 	
 	
@@ -34,6 +34,8 @@ public class MainActivity extends Activity {
 	TextView cityDate;
 	
 	public SlidingMenu menu;
+	
+	public int ADD_CITY_ACT_ID = 1;
 	
 	
 	final String LOG_TAG = "WeatherLogs";
@@ -65,27 +67,38 @@ public class MainActivity extends Activity {
 		cityTemp = (TextView) findViewById(R.id.city_temperature);
 		cityDate = (TextView) findViewById(R.id.city_date);
 
-		Button button = (Button) findViewById(R.id.button_get_weather);
-		button.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-					getWeatherData();
-			}
-		});
-		
+		Button button_get_weather = (Button) findViewById(R.id.button_get_weather);
 		Button menu_button = (Button) findViewById(R.id.menu_button);
-		menu_button.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				menu.toggle();
-			}
-		});
+		Button add_city_button = (Button) findViewById(R.id.add_city_button);
+		button_get_weather.setOnClickListener(this);
+		menu_button.setOnClickListener(this);
+		add_city_button.setOnClickListener(this);
+		
 		
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("custom-event-name"));
 		
 		updateCityForecast();
 		
 	}
+	
+	
+		@Override
+		public void onClick(View v) {
+		    switch (v.getId()) {
+			    case R.id.button_get_weather:{
+			    	getWeatherData();
+			    }break;
+			    case R.id.menu_button:{
+			    	menu.toggle();
+			    }break;
+			    case R.id.add_city_button:{
+			    	Intent intent = new Intent(this, AddNewCity.class);
+				    startActivityForResult(intent, ADD_CITY_ACT_ID);
+			    }break;
+		    }
+		    
+		}
+	
 	
 	@Override
 	protected void onResume() {
@@ -149,6 +162,15 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+	
+	
+	 @Override
+	 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	    if (resultCode == RESULT_OK) {
+	    	currentCityId = data.getIntExtra("cityId", currentCityId);
+	    	updateCityForecast();
+	    }
+	 }
 	
 	
 	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
