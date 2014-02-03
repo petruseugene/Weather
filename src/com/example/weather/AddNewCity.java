@@ -14,12 +14,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +31,8 @@ import android.widget.ListView;
 public class AddNewCity extends Activity {
 	
 	private String search_query = "";
+	int city_id[];
+	String res[];
 	
 	final String LOG_TAG = "WeatherSerchLogs";
 
@@ -117,14 +122,26 @@ public class AddNewCity extends Activity {
 		try {
 			JSONObject json = new JSONObject(result);
 			JSONArray jsonArr = json.getJSONArray("list");
-			String res[] = new String[jsonArr.length()];
+			res = new String[jsonArr.length()];
+			city_id = new int[jsonArr.length()];
 			for(int i = 0;i<jsonArr.length();i++){
-				res[i] = jsonArr.getJSONObject(i).getString("name") + ", " +jsonArr.getJSONObject(i).getJSONObject("sys").getString("country");
+				res[i] = jsonArr.getJSONObject(i).getString("name") + ", " ;//+jsonArr.getJSONObject(i).getJSONObject("sys").getString("country");
+				city_id[i] = jsonArr.getJSONObject(i).getInt("id");
 			}
 			
 			ListView cityList = (ListView) findViewById(R.id.list_of_search);
 			ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, res);
 			cityList.setAdapter(adapter);
+			
+			cityList.setOnItemClickListener(new OnItemClickListener() {
+				@Override
+				public void onItemClick(AdapterView<?> adapter, View v,	int position, long id) {
+					Intent intent = new Intent();
+				    intent.putExtra("newCityId", city_id[position]);
+				    setResult(RESULT_OK, intent);
+				    finish();
+				}
+			});
 				
 			
 		} catch (JSONException e) {

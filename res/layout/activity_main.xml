@@ -12,7 +12,14 @@
 	        android:layout_height="wrap_content"
 	        android:layout_gravity="left"
 	        android:text="Menu" />
-
+		
+	    <Button
+	        android:id="@+id/button_make_favourite"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="right"
+	        android:text="Make Favourite" />
+	    
 	    <Button
 	        android:id="@+id/button_get_weather"
 	        android:layout_width="wrap_content"
@@ -27,7 +34,6 @@
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:textColor="#000"
-        android:textAlignment="center"
         android:textSize="25dp"
         android:layout_margin="5dp"
         android:text="City name" />
@@ -39,7 +45,6 @@
         android:layout_gravity="center_horizontal"    
         android:background="#FFFFFF"
         android:textColor="#000"
-        android:textAlignment="center"
         android:textSize="20dp"
         android:layout_margin="5dp"
         android:text="Weather" />
@@ -52,7 +57,6 @@
         android:layout_margin="5dp"
         android:background="#FFFFFF"
         android:text="Temperature"
-        android:textAlignment="center"
         android:textColor="#000"
         android:textSize="20dp" />
 
@@ -60,11 +64,9 @@
         android:id="@+id/city_date"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:layout_marginTop="5dp"
+        android:layout_margin="5dp"
         android:background="#FFFFFF"
         android:text="Forecast date"
-        android:textAlignment="center"
         android:textColor="#000"
         android:textSize="20dp"/>
 

@@ -1,18 +1,27 @@
 package com.example.weather;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -21,7 +30,7 @@ import android.widget.Toast;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
-public class MainActivity extends Activity implements OnClickListener{
+public class MainActivity extends ActionBarActivity implements OnClickListener{
 
 	
 	
@@ -32,8 +41,14 @@ public class MainActivity extends Activity implements OnClickListener{
 	TextView cityWeather;
 	TextView cityTemp;
 	TextView cityDate;
+	ListView cityList;
+	
+	ActionBar ab ;
 	
 	public SlidingMenu menu;
+	
+	private String names[];
+	private int city_id[]; 
 	
 	public int ADD_CITY_ACT_ID = 1;
 	
@@ -53,11 +68,15 @@ public class MainActivity extends Activity implements OnClickListener{
 		menu.setShadowWidth(20);
 		menu.setShadowDrawable(R.drawable.shadow);
 		menu.setFadeDegree(0.0f);
-		menu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
+		menu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
 		DisplayMetrics metrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(metrics);
 		menu.setBehindWidth((int) (metrics.widthPixels * 0.85));
 		menu.setMenu(R.layout.main_menu);
+		
+		ab = getSupportActionBar();
+		ab.setHomeButtonEnabled(true);
+		
 		
 		getWeatherData();
 			
@@ -70,34 +89,52 @@ public class MainActivity extends Activity implements OnClickListener{
 		Button button_get_weather = (Button) findViewById(R.id.button_get_weather);
 		Button menu_button = (Button) findViewById(R.id.menu_button);
 		Button add_city_button = (Button) findViewById(R.id.add_city_button);
+		Button button_make_favourite = (Button) findViewById(R.id.button_make_favourite);
 		button_get_weather.setOnClickListener(this);
 		menu_button.setOnClickListener(this);
 		add_city_button.setOnClickListener(this);
+		button_make_favourite.setOnClickListener(this);
 		
 		
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("custom-event-name"));
-		
-		updateCityForecast();
+		cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI, null,  WeatherDB.Cities.FAVOURITE_CITY+" = 'true'" , null, null);
+    	if(cur.moveToFirst()){
+    		currentCityId = cur.getInt(WeatherDB.Cities.CITY_ID_KEY);
+    	}
+		getWeatherData();
 		
 	}
 	
 	
-		@Override
-		public void onClick(View v) {
-		    switch (v.getId()) {
-			    case R.id.button_get_weather:{
-			    	getWeatherData();
-			    }break;
-			    case R.id.menu_button:{
-			    	menu.toggle();
-			    }break;
-			    case R.id.add_city_button:{
-			    	Intent intent = new Intent(this, AddNewCity.class);
-				    startActivityForResult(intent, ADD_CITY_ACT_ID);
-			    }break;
-		    }
-		    
-		}
+	@Override
+	public void onClick(View v) {
+	    switch (v.getId()) {
+		    case R.id.button_get_weather:{
+		    	getWeatherData();
+		    }break;
+		    case R.id.menu_button:{
+		    	menu.toggle();
+		    }break;
+		    case R.id.add_city_button:{
+		    	Intent intent = new Intent(this, AddNewCity.class);
+			    startActivityForResult(intent, ADD_CITY_ACT_ID);
+		    }break;
+		    case R.id.button_make_favourite:{
+		    	ContentValues cv = new ContentValues();
+		    	int res;
+		    		cv.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
+		    		res = getContentResolver().update(WeatherContentProvider.WEATHER_CONTENT_URI, cv, WeatherDB.Cities.FAVOURITE_CITY+" = 'true'" ,null);
+		    	
+		    	Log.d(LOG_TAG,"inserted false in -");
+		    	
+		    	ContentValues cv2 = new ContentValues();
+		    	cv2.put(WeatherDB.Cities.FAVOURITE_CITY, "true");
+		    	
+		    	int res1 = getContentResolver().update(WeatherContentProvider.WEATHER_CONTENT_URI, cv2 ,
+		    			WeatherDB.Cities.CITY_ID+" = " + currentCityId, null);
+		    }break;
+	    }
+	}
 	
 	
 	@Override
@@ -117,21 +154,34 @@ public class MainActivity extends Activity implements OnClickListener{
 	}
 	
 	public void updateCityForecast(){
+		
 		cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI, null, null, null, null);
-		String names[] = new String[cur.getCount()];
+		names = new String[cur.getCount()];
+		city_id = new int[cur.getCount()];
 		int i = 0;
 		if(cur.moveToFirst()){
 			do{
-				names[i] = cur.getString(WeatherDB.Cities.CITY_NAME_KEY)+cur.getString(WeatherDB.Cities.ID_KEY)+" "+
-						cur.getString(WeatherDB.Cities.TEMPERATURE_KEY); i++;
+				names[i] = cur.getString(WeatherDB.Cities.CITY_NAME_KEY) + " " +cur.getString(WeatherDB.Cities.COUNTRY_KEY)+" " + cur.getString(WeatherDB.Cities.TEMPERATURE_KEY); 
+				city_id[i] = cur.getInt(WeatherDB.Cities.CITY_ID_KEY);
+				i++;
 			} while( cur.moveToNext() );
 		}
+		
 		// находим список
-		ListView lvMain = (ListView) findViewById(R.id.left_menu_listView);
+		cityList = (ListView) findViewById(R.id.left_menu_listView);
 		// создаем адаптер
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names);
 		// присваиваем адаптер списку
-		lvMain.setAdapter(adapter);
+		cityList.setAdapter(adapter);
+		
+		cityList.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> adapter, View v,	int position, long id) {
+				currentCityId = city_id[position];
+				updateCityForecast();
+				menu.toggle();
+			}
+		});
 		
 		if(currentCityId>0){
 			cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI,
@@ -139,7 +189,7 @@ public class MainActivity extends Activity implements OnClickListener{
 											 WeatherDB.Cities.CITY_ID + " = " + currentCityId , null, null);
 			if(cur.moveToFirst()){
 				do{
-					cityName.setText(cur.getString(WeatherDB.Cities.CITY_NAME_KEY));
+					cityName.setText(cur.getString(WeatherDB.Cities.CITY_NAME_KEY)+", "+cur.getString(WeatherDB.Cities.COUNTRY_KEY));
 					cityTemp.setText(cur.getString(WeatherDB.Cities.TEMPERATURE_KEY));
 					cityWeather.setText(cur.getString(WeatherDB.Cities.WEATHER_KEY));
 					cityDate.setText(cur.getString(WeatherDB.Cities.TIME_KEY));
@@ -158,17 +208,34 @@ public class MainActivity extends Activity implements OnClickListener{
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.main_activity_actions, menu);
 		return true;
 	}
+	
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		    case android.R.id.home:
+		    	menu.toggle();
+		        return true;
+		    case R.id.add_new_city:
+		    	Intent intent = new Intent(this, AddNewCity.class);
+			    startActivityForResult(intent, ADD_CITY_ACT_ID);
+		        return true;
+		    case R.id.update_data:
+		    	getWeatherData();
+		    	return true;
+		    default:
+		        return super.onOptionsItemSelected(item);
+	    }
+    }
 	
 	
 	 @Override
 	 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	    if (resultCode == RESULT_OK) {
-	    	currentCityId = data.getIntExtra("cityId", currentCityId);
-	    	updateCityForecast();
+	    	currentCityId = data.getIntExtra("newCityId", currentCityId);
+	    	getWeatherData();
 	    }
 	 }
 	

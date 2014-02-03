@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -125,6 +126,7 @@ public class GetWeatherService extends Service {
 			JSONArray jsonArr = json.getJSONArray("weather");
 			
 			JSONObject jsonMain = new JSONObject(json.getString("main"));
+			String country = new JSONObject(json.getString("sys")).getString("country");
 			
 			Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
 			
@@ -137,10 +139,6 @@ public class GetWeatherService extends Service {
 			if(c.getCount()>0){
 				ContentValues newValues = new ContentValues();
 				
-				newValues.put(WeatherDB.Cities.CITY_ID, "5128638");
-				newValues.put(WeatherDB.Cities.CITY_NAME, json.getString("name"));
-				newValues.put(WeatherDB.Cities.COUNTRY, "US");
-				newValues.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
 				newValues.put(WeatherDB.Cities.TEMPERATURE, jsonMain.getString("temp"));
 				newValues.put(WeatherDB.Cities.WEATHER, jsonArr.getJSONObject(0).getString("description"));
 				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
@@ -150,13 +148,26 @@ public class GetWeatherService extends Service {
 										 newValues,
 										 WeatherDB.Cities.CITY_ID + " = " + cityId,
 										 null);
-				Log.d(LOG_TAG, "myRowUri = " + myRowUri);
+				Log.d(LOG_TAG, "update myRowUri = " + myRowUri);
 				sendBroadcastService(true);
 			} else {
-				sendBroadcastService(false);
+				ContentValues newValues = new ContentValues();
+				
+				newValues.put(WeatherDB.Cities.CITY_ID, cityId);
+				newValues.put(WeatherDB.Cities.CITY_NAME, json.getString("name"));
+				newValues.put(WeatherDB.Cities.COUNTRY, country);
+				newValues.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
+				newValues.put(WeatherDB.Cities.TEMPERATURE, jsonMain.getString("temp"));
+				newValues.put(WeatherDB.Cities.WEATHER, jsonArr.getJSONObject(0).getString("description"));
+				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
+				newValues.put(WeatherDB.Cities.ICON, "ico90.png");
+				
+				Uri myRowUri = cr.insert(WeatherContentProvider.WEATHER_CONTENT_URI, newValues);
+				Log.d(LOG_TAG, "insert myRowUri = " + myRowUri);
+				sendBroadcastService(true);
 			}
-			
-			this.finalize();
+			c.close();
+			this.stopSelf();
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (Throwable e) {
@@ -167,7 +178,7 @@ public class GetWeatherService extends Service {
 	
 	public void sendBroadcastService(boolean update) {  
 		Intent intent = new Intent("custom-event-name");
-		intent.putExtra("update", true);
+		intent.putExtra("update", update);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 	    Log.d(LOG_TAG, "update = " + update);
 	}  

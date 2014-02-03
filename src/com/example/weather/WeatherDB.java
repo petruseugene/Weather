@@ -30,7 +30,7 @@ public class WeatherDB {
 	  public static final int CITY_ID_KEY 			= 1;
 	  public static final int CITY_NAME_KEY 		= 2;
 	  public static final int COUNTRY_KEY 			= 3;
-	  public static final int FAVOURITE_CITY_key 	= 4;
+	  public static final int FAVOURITE_CITY_KEY 	= 4;
 	  public static final int TEMPERATURE_KEY 		= 5;
 	  public static final int WEATHER_KEY 			= 6;
 	  public static final int TIME_KEY 				= 7;
