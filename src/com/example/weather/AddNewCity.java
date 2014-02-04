@@ -53,11 +53,6 @@ public class AddNewCity extends Activity {
 			}
 		});
 		
-		
-//		Intent intent = new Intent();
-//	    intent.putExtra("name", etName.getText().toString());
-//	    setResult(RESULT_OK, intent);
-//	    finish();
 	}
 	
 	
@@ -73,7 +68,7 @@ public class AddNewCity extends Activity {
 				if (inputStream != null) {
 					result = convertInputStreamToString(inputStream);
 				} else {
-					result = "Did not work!";
+					result = "Cant get data.";
 				}
 			} catch (Exception e) {
 				Log.d("InputStream", e.getLocalizedMessage());
@@ -83,15 +78,13 @@ public class AddNewCity extends Activity {
 	}
 
 	
-	private static String convertInputStreamToString(InputStream inputStream)
-			throws IOException {
+	private static String convertInputStreamToString(InputStream inputStream) throws IOException {
 		BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
 		String line = "";
 		String result = "";
 		while ((line = bufferedReader.readLine()) != null) result += line;
 		inputStream.close();
 		return result;
-
 	}
 
 	
@@ -125,7 +118,7 @@ public class AddNewCity extends Activity {
 			res = new String[jsonArr.length()];
 			city_id = new int[jsonArr.length()];
 			for(int i = 0;i<jsonArr.length();i++){
-				res[i] = jsonArr.getJSONObject(i).getString("name") + ", " ;//+jsonArr.getJSONObject(i).getJSONObject("sys").getString("country");
+				res[i] = jsonArr.getJSONObject(i).getString("name") + ", "  ;//+jsonArr.getJSONObject(i).getJSONObject("sys").getString("country");
 				city_id[i] = jsonArr.getJSONObject(i).getInt("id");
 			}
 			

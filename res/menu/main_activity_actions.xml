@@ -10,4 +10,9 @@
         android:title="@string/action_settings"
         android:icon="@drawable/ic_action_refresh"
         sabd:showAsAction="always" />
+    <item
+        android:id="@+id/make_favourite"
+        android:title="@string/action_settings"
+        android:icon="@drawable/ic_action_refresh"
+        sabd:showAsAction="always" />
 </menu>

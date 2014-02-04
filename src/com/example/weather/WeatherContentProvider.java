@@ -211,12 +211,9 @@ public class WeatherContentProvider extends ContentProvider {
 	    	db.execSQL(DB_CREATE);
 	      	ContentValues cv = new ContentValues();
 	        cv.put(WeatherDB.Cities.CITY_ID, "5128638");
-	        cv.put(WeatherDB.Cities.CITY_NAME, "NYrk");
+	        cv.put(WeatherDB.Cities.CITY_NAME, "New York");
 	        cv.put(WeatherDB.Cities.COUNTRY, "US");
 	        cv.put(WeatherDB.Cities.FAVOURITE_CITY, "true");
-	        cv.put(WeatherDB.Cities.TEMPERATURE, "-12");
-	        cv.put(WeatherDB.Cities.WEATHER, "Sky is clear");
-	        cv.put(WeatherDB.Cities.TIME, "123213213");
 	        cv.put(WeatherDB.Cities.ICON, "ico90.png");
 	        db.insert(WeatherDB.Cities.TABLE, null, cv);
 	    }

@@ -1,21 +1,18 @@
 package com.example.weather;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +21,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,7 +32,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 
 	
 	
-	private static int currentCityId = 5128638;
+	private static int currentCityId = 0;
 	private Cursor cur;
 	
 	TextView cityName;
@@ -62,6 +60,44 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		initSliderMenu();
+		
+		ab = getSupportActionBar();
+		ab.setHomeButtonEnabled(true);
+			
+		
+		cityName = (TextView) findViewById(R.id.city_weather_name);
+		cityWeather = (TextView) findViewById(R.id.city_weather_condition);
+		cityTemp = (TextView) findViewById(R.id.city_temperature);
+		cityDate = (TextView) findViewById(R.id.city_date);
+
+		
+		Button add_city_button = (Button) findViewById(R.id.add_city_button);
+		add_city_button.setOnClickListener(this);
+		
+		
+		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("custom-event-name"));
+		cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI, null,  WeatherDB.Cities.FAVOURITE_CITY+" = 'true'" , null, null);
+    	if(cur.moveToFirst()){
+    		currentCityId = cur.getInt(WeatherDB.Cities.CITY_ID_KEY);
+    	}
+		getWeatherRequest();
+		
+		updateMainUI();
+		
+		cityList.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> adapter, View v,	int position, long id) {
+				currentCityId = city_id[position];
+				updateMainUI();
+				menu.toggle();
+			}
+		});
+		
+	}
+	
+	
+	private void initSliderMenu() {
 		menu = new SlidingMenu(this);
 		menu.setMode(SlidingMenu.LEFT);
 		menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
@@ -71,67 +107,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 		menu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
 		DisplayMetrics metrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(metrics);
-		menu.setBehindWidth((int) (metrics.widthPixels * 0.85));
+		menu.setBehindWidth((int) (metrics.widthPixels * 0.80));
 		menu.setMenu(R.layout.main_menu);
-		
-		ab = getSupportActionBar();
-		ab.setHomeButtonEnabled(true);
-		
-		
-		getWeatherData();
-			
-		
-		cityName = (TextView) findViewById(R.id.city_weather_name);
-		cityWeather = (TextView) findViewById(R.id.city_weather_condition);
-		cityTemp = (TextView) findViewById(R.id.city_temperature);
-		cityDate = (TextView) findViewById(R.id.city_date);
-
-		Button button_get_weather = (Button) findViewById(R.id.button_get_weather);
-		Button menu_button = (Button) findViewById(R.id.menu_button);
-		Button add_city_button = (Button) findViewById(R.id.add_city_button);
-		Button button_make_favourite = (Button) findViewById(R.id.button_make_favourite);
-		button_get_weather.setOnClickListener(this);
-		menu_button.setOnClickListener(this);
-		add_city_button.setOnClickListener(this);
-		button_make_favourite.setOnClickListener(this);
-		
-		
-		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("custom-event-name"));
-		cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI, null,  WeatherDB.Cities.FAVOURITE_CITY+" = 'true'" , null, null);
-    	if(cur.moveToFirst()){
-    		currentCityId = cur.getInt(WeatherDB.Cities.CITY_ID_KEY);
-    	}
-		getWeatherData();
-		
 	}
-	
-	
+
+
 	@Override
 	public void onClick(View v) {
 	    switch (v.getId()) {
-		    case R.id.button_get_weather:{
-		    	getWeatherData();
-		    }break;
-		    case R.id.menu_button:{
-		    	menu.toggle();
-		    }break;
 		    case R.id.add_city_button:{
 		    	Intent intent = new Intent(this, AddNewCity.class);
 			    startActivityForResult(intent, ADD_CITY_ACT_ID);
-		    }break;
-		    case R.id.button_make_favourite:{
-		    	ContentValues cv = new ContentValues();
-		    	int res;
-		    		cv.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
-		    		res = getContentResolver().update(WeatherContentProvider.WEATHER_CONTENT_URI, cv, WeatherDB.Cities.FAVOURITE_CITY+" = 'true'" ,null);
-		    	
-		    	Log.d(LOG_TAG,"inserted false in -");
-		    	
-		    	ContentValues cv2 = new ContentValues();
-		    	cv2.put(WeatherDB.Cities.FAVOURITE_CITY, "true");
-		    	
-		    	int res1 = getContentResolver().update(WeatherContentProvider.WEATHER_CONTENT_URI, cv2 ,
-		    			WeatherDB.Cities.CITY_ID+" = " + currentCityId, null);
 		    }break;
 	    }
 	}
@@ -153,9 +139,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 		super.onDestroy();
 	}
 	
-	public void updateCityForecast(){
-		
-		cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI, null, null, null, null);
+	public void updateMainUI(){
+		ContentResolver cr = getContentResolver();
+		cur = cr.query(WeatherContentProvider.WEATHER_CONTENT_URI, null, null, null, null);
 		names = new String[cur.getCount()];
 		city_id = new int[cur.getCount()];
 		int i = 0;
@@ -167,41 +153,31 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 			} while( cur.moveToNext() );
 		}
 		
-		// находим список
 		cityList = (ListView) findViewById(R.id.left_menu_listView);
-		// создаем адаптер
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names);
-		// присваиваем адаптер списку
 		cityList.setAdapter(adapter);
 		
-		cityList.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> adapter, View v,	int position, long id) {
-				currentCityId = city_id[position];
-				updateCityForecast();
-				menu.toggle();
-			}
-		});
-		
 		if(currentCityId>0){
-			cur = getContentResolver().query(WeatherContentProvider.WEATHER_CONTENT_URI,
+			cur = cr.query(WeatherContentProvider.WEATHER_CONTENT_URI,
 											 null,
-											 WeatherDB.Cities.CITY_ID + " = " + currentCityId , null, null);
+											 WeatherDB.Cities.CITY_ID + " = " + currentCityId,
+											 null,
+											 null);
 			if(cur.moveToFirst()){
-				do{
-					cityName.setText(cur.getString(WeatherDB.Cities.CITY_NAME_KEY)+", "+cur.getString(WeatherDB.Cities.COUNTRY_KEY));
+				do{	
+					ImageView img = (ImageView) findViewById(R.id.weather_icon);
+					img.setImageResource(R.drawable.ic_launcher);
+					cityName.setText(cur.getString(WeatherDB.Cities.CITY_NAME_KEY) + ", " + cur.getString(WeatherDB.Cities.COUNTRY_KEY));
 					cityTemp.setText(cur.getString(WeatherDB.Cities.TEMPERATURE_KEY));
 					cityWeather.setText(cur.getString(WeatherDB.Cities.WEATHER_KEY));
 					cityDate.setText(cur.getString(WeatherDB.Cities.TIME_KEY));
 				} while( cur.moveToNext() );
 			}
 		}
-		
-		Toast.makeText(getBaseContext(), "Updated", Toast.LENGTH_LONG).show();
 		cur.close();
 	}
 	
-	public void getWeatherData(){
+	public void getWeatherRequest(){
 		startService(new Intent(this, GetWeatherService.class).putExtra("cityId", currentCityId));
 	}
 
@@ -223,35 +199,52 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 			    startActivityForResult(intent, ADD_CITY_ACT_ID);
 		        return true;
 		    case R.id.update_data:
-		    	getWeatherData();
+		    	getWeatherRequest();
+		    	return true;
+		    case R.id.make_favourite:
+		    	makeCurrantCityFavourite();
 		    	return true;
 		    default:
 		        return super.onOptionsItemSelected(item);
 	    }
     }
 	
+	private void makeCurrantCityFavourite(){
+		ContentValues cv = new ContentValues();
+		ContentResolver contRes = getContentResolver();
+    	cv.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
+    	int res = contRes.update(WeatherContentProvider.WEATHER_CONTENT_URI, 
+    							 cv,
+    							 WeatherDB.Cities.FAVOURITE_CITY + " = 'true'",
+    							 null);
+    	cv.clear();
+    	cv.put(WeatherDB.Cities.FAVOURITE_CITY, "true");
+    	res = contRes.update(WeatherContentProvider.WEATHER_CONTENT_URI, 
+    						 cv,
+    						 WeatherDB.Cities.CITY_ID + " = " + currentCityId,
+    						 null);
+	}
 	
-	 @Override
-	 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-	    if (resultCode == RESULT_OK) {
-	    	currentCityId = data.getIntExtra("newCityId", currentCityId);
-	    	getWeatherData();
-	    }
-	 }
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	   if (resultCode == RESULT_OK) {
+		   currentCityId = data.getIntExtra("newCityId", currentCityId);
+		   getWeatherRequest();
+	   }
+	}
 	
 	
 	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			// Get extra data included in the Intent
 			boolean isUpdated = intent.getBooleanExtra("update", false);
 			if(isUpdated){
-				updateCityForecast();
+				updateMainUI();
+				Toast.makeText(getBaseContext(), getString(R.string.updated_message_pos), Toast.LENGTH_LONG).show();
 			} else {
-				Toast.makeText(getBaseContext(), "NOT Updated", Toast.LENGTH_LONG).show();
+				Toast.makeText(getBaseContext(), getString(R.string.updated_message_neg), Toast.LENGTH_LONG).show();
 			}
-			
-			//Log.d("receiver", "Got message: " + message);
 		}
 	};
 		

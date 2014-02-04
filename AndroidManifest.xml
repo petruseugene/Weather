@@ -18,7 +18,8 @@
         <activity
             android:name="com.example.weather.MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/Theme.AppCompat.Light" >
+            android:theme="@style/Theme.AppCompat.Light"
+            android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
 				
                 <action android:name="android.intent.action.MAIN" />
@@ -28,7 +29,8 @@
         <activity
             android:name="com.example.weather.WeatherLoading"
             android:label="@string/app_name"
-            android:theme="@style/Theme.AppCompat.Light" >
+            android:theme="@style/Theme.AppCompat.Light"
+            android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>

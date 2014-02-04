@@ -2,72 +2,59 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"  >
-    
+    android:orientation="vertical"
+    android:padding="5dp" >
 
-
-	    <Button
-	        android:id="@+id/menu_button"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="left"
-	        android:text="Menu" />
-		
-	    <Button
-	        android:id="@+id/button_make_favourite"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="right"
-	        android:text="Make Favourite" />
-	    
-	    <Button
-	        android:id="@+id/button_get_weather"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="right"
-	        android:text="Update" />
-
+    <ImageView
+        android:id="@+id/weather_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:padding="10dp"
+        android:src="@drawable/ic_action_new" />
     
     <TextView
         android:id="@+id/city_weather_name"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:background="#FFFFFF"
         android:textColor="#000"
-        android:textSize="25dp"
+        android:textSize="25sp"
         android:layout_margin="5dp"
-        android:text="City name" />
+        android:text="@string/city_name" />
     
     <TextView
         android:id="@+id/city_weather_condition"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"    
+        android:gravity="center"
         android:background="#FFFFFF"
         android:textColor="#000"
-        android:textSize="20dp"
+        android:textSize="20sp"
         android:layout_margin="5dp"
-        android:text="Weather" />
+        android:text="@string/city_weather" />
     
     <TextView
         android:id="@+id/city_temperature"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:gravity="center"
         android:layout_margin="5dp"
         android:background="#FFFFFF"
-        android:text="Temperature"
+        android:text="@string/city_temper"
         android:textColor="#000"
-        android:textSize="20dp" />
+        android:textSize="20sp" />
 
     <TextView
         android:id="@+id/city_date"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
+        android:gravity="center"
         android:background="#FFFFFF"
-        android:text="Forecast date"
+        android:text="@string/city_datetime"
         android:textColor="#000"
-        android:textSize="20dp"/>
+        android:textSize="20sp"/>
 
 </LinearLayout>

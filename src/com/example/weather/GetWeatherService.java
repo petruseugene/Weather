@@ -42,7 +42,7 @@ public class GetWeatherService extends Service {
 	  
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		cityId = intent.getIntExtra("cityId", 5128638);
+		cityId = intent.getIntExtra("cityId", cityId);
 	    getWeather();
 	    return super.onStartCommand(intent, flags, startId);
 	}
@@ -60,7 +60,23 @@ public class GetWeatherService extends Service {
 	
 	
 	private void getWeather() {
-		new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
+		if (cityId==0) {
+			ContentResolver contRes = getContentResolver();
+			final String[] projection = new String[]{ WeatherDB.Cities.CITY_ID};
+			Cursor cur = contRes.query(WeatherContentProvider.WEATHER_CONTENT_URI, 
+									projection, 
+									null, 
+									null, 
+									null);
+			if(cur.moveToFirst()){
+				do{	Log.d(LOG_TAG, "get " + cur.getString(WeatherDB.Cities.CITY_ID_KEY));
+					new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cur.getString(WeatherDB.Cities.CITY_ID_KEY) + "&units=metric");
+				} while (cur.moveToNext());
+			}
+		} else {
+			Log.d(LOG_TAG, "get " + cityId);
+			new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
+		}
 	}
 	
 	
@@ -75,7 +91,7 @@ public class GetWeatherService extends Service {
 				if (inputStream != null) {
 					result = convertInputStreamToString(inputStream);
 				} else {
-					result = "Did not work!";
+					result = "Cant get data.";
 				}
 			} catch (Exception e) {
 				Log.d("InputStream", e.getLocalizedMessage());
@@ -85,15 +101,13 @@ public class GetWeatherService extends Service {
 	}
 
 	
-	private static String convertInputStreamToString(InputStream inputStream)
-			throws IOException {
+	private static String convertInputStreamToString(InputStream inputStream) throws IOException {
 		BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
 		String line = "";
 		String result = "";
 		while ((line = bufferedReader.readLine()) != null) result += line;
 		inputStream.close();
 		return result;
-
 	}
 
 	
@@ -112,16 +126,17 @@ public class GetWeatherService extends Service {
 		protected String doInBackground(String... urls) {
 			return GET(urls[0]);
 		}
-
 		@Override
 		protected void onPostExecute(String result) {
-			updateCityForecast(result);
+			super.onPostExecute(result);
+			updateData(result);
 		}
 	}
 	
 	
-	public void updateCityForecast(String result){
+	public void updateData(String result){
 		try {
+			Log.d(LOG_TAG, "pre json");
 			JSONObject json = new JSONObject(result);
 			JSONArray jsonArr = json.getJSONArray("weather");
 			
@@ -148,7 +163,6 @@ public class GetWeatherService extends Service {
 										 newValues,
 										 WeatherDB.Cities.CITY_ID + " = " + cityId,
 										 null);
-				Log.d(LOG_TAG, "update myRowUri = " + myRowUri);
 				sendBroadcastService(true);
 			} else {
 				ContentValues newValues = new ContentValues();
@@ -163,14 +177,15 @@ public class GetWeatherService extends Service {
 				newValues.put(WeatherDB.Cities.ICON, "ico90.png");
 				
 				Uri myRowUri = cr.insert(WeatherContentProvider.WEATHER_CONTENT_URI, newValues);
-				Log.d(LOG_TAG, "insert myRowUri = " + myRowUri);
 				sendBroadcastService(true);
 			}
 			c.close();
 			this.stopSelf();
 		} catch (JSONException e) {
+			sendBroadcastService(false);
 			e.printStackTrace();
 		} catch (Throwable e) {
+			sendBroadcastService(false);
 			e.printStackTrace();
 		}
 	}
