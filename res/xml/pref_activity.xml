@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+ <PreferenceCategory
+   android:title="Forecast settings" >
+
+ <CheckBoxPreference 
+     android:key="pref_show_notifications" 
+     android:defaultValue="true"
+     android:title="Show notifications"
+     android:summary="On/Off weather notifications"/>
+  <ListPreference
+     android:entries="@array/pref_forecast_length_name"
+     android:entryValues="@array/pref_forecast_length_val"
+     android:key="pref_forecast_length"
+     android:summary="select length (days)"
+     android:title="Forecast length" 
+     android:defaultValue="5"
+     />
+  
+ </PreferenceCategory>
+</PreferenceScreen>

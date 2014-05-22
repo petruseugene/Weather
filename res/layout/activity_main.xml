@@ -2,72 +2,77 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"  >
-    
-
-
-	    <Button
-	        android:id="@+id/menu_button"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="left"
-	        android:text="Menu" />
-		
-	    <Button
-	        android:id="@+id/button_make_favourite"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="right"
-	        android:text="Make Favourite" />
-	    
-	    <Button
-	        android:id="@+id/button_get_weather"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="right"
-	        android:text="Update" />
-
-    
+    android:background="@drawable/activity_background"
+    android:orientation="vertical"
+    android:padding="0dp" >
+	<ScrollView
+    android:id="@+id/scrollview"
+    android:layout_height="wrap_content"
+    android:layout_width="fill_parent"
+    android:fillViewport="true">
+    <LinearLayout 
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="5dp" >
     <TextView
         android:id="@+id/city_weather_name"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFF"
-        android:textColor="#000"
-        android:textSize="25dp"
-        android:layout_margin="5dp"
-        android:text="City name" />
-    
+        android:layout_margin="20dp"
+        android:gravity="center"
+        android:text="@string/city_name"
+        android:textColor="@color/text_blue_color"
+        android:textSize="30sp" />
+
+    <ImageView
+        android:id="@+id/weather_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="5dp"
+        android:contentDescription="@string/weather_image_description"
+        android:src="@drawable/img01"
+        android:textColor="@color/text_blue_color" />
+
     <TextView
         android:id="@+id/city_weather_condition"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"    
-        android:background="#FFFFFF"
-        android:textColor="#000"
-        android:textSize="20dp"
         android:layout_margin="5dp"
-        android:text="Weather" />
-    
+        android:gravity="center"
+        android:text="@string/city_weather"
+        android:textColor="@color/text_blue_color"
+        android:textSize="20sp" />
+
     <TextView
         android:id="@+id/city_temperature"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
         android:layout_margin="5dp"
-        android:background="#FFFFFF"
-        android:text="Temperature"
-        android:textColor="#000"
-        android:textSize="20dp" />
+        android:gravity="center"
+        android:text="@string/city_temper"
+        android:textColor="@color/text_blue_color"
+        android:textSize="50sp" />
 
     <TextView
         android:id="@+id/city_date"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
-        android:background="#FFFFFF"
-        android:text="Forecast date"
-        android:textColor="#000"
-        android:textSize="20dp"/>
+        android:gravity="center"
+        android:text="@string/city_datetime"
+        android:textColor="@color/text_blue_color"
+        android:textSize="15sp" />
 
+    <Button
+        android:id="@+id/show_forecast_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:paddingTop="10dp"
+        android:text="@string/forecast_button_text"
+        android:textColor="@color/text_blue_color" />
+    </LinearLayout>
+	</ScrollView>
 </LinearLayout>

@@ -1,0 +1,21 @@
+<resources>
+
+    <string name="title_activity_settings">Weather settings</string>
+
+    <string-array name="pref_forecast_length_name">
+        <item>3 days</item>
+        <item>4 days</item>
+        <item>5 days</item>
+        <item>6 days</item>
+        <item>7 days</item>
+    </string-array>
+    <string-array name="pref_forecast_length_val">
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+    </string-array>
+    
+
+</resources>

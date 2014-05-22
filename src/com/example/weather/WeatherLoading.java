@@ -1,47 +1,54 @@
 package com.example.weather;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.Window;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.widget.TextView;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 public class WeatherLoading extends Activity {
+	
+	public static final int serviceAlarmDuration = 1000 * 3600;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.loading_weather);
-		TextView appName = (TextView) findViewById(R.id.textViewAppName);
-		Animation startAnimation = AnimationUtils.loadAnimation(this,
-				R.anim.start_animation);
-		appName.startAnimation(startAnimation);
-		startAnimation.setAnimationListener(new Animation.AnimationListener() {
-			@Override
-			public void onAnimationEnd(Animation animation) {
-				startActivity(new Intent(WeatherLoading.this,
-						MainActivity.class));
-				WeatherLoading.this.finish();
-			}
-
-			@Override
-			public void onAnimationRepeat(Animation animation) {
-			}
-
-			@Override
-			public void onAnimationStart(Animation animation) {
-			}
-		});
+		startAlarmWeather(this);
 	}
-
+	
+	private void startAlarmWeather(Context context) {
+		if( BootReceiver.am == null ){
+			AlarmManager am=(AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+            Intent recieverIntent = new Intent(context, AlarmManagerBroadcastReceiver.class);
+            PendingIntent pIntent = PendingIntent.getBroadcast(context, 0, recieverIntent, 0);
+            am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), serviceAlarmDuration, pIntent);
+		}
+	}
+	
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		//getMenuInflater().inflate(R.menu.main, menu);
-		return true;
+	protected void onStart() {
+		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter(GetWeatherService.ACTION_UPDATE_WEATHER));
+		super.onStart();
 	}
+	
+	@Override
+	protected void onDestroy() {
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+		super.onDestroy();
+	}
+	
+	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			startActivity(new Intent(WeatherLoading.this, MainActivity.class));
+			WeatherLoading.this.finish();
+		}
+	};
 
 }

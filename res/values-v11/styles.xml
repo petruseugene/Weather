@@ -4,8 +4,18 @@
         Base application theme for API 11+. This theme completely replaces
         AppBaseTheme from res/values/styles.xml on API 11+ devices.
     -->
-    <style name="AppBaseTheme" parent="@style/Theme.AppCompat.Light">
-        <!-- API 11 theme customizations can go here. -->
+  <style name="AppBaseTheme"
+           parent="@style/Theme.Base.AppCompat.Light">
+        <item name="android:actionBarStyle" >@style/MyActionBar</item>
+
+        <!-- Support library compatibility -->
     </style>
 
+    <!-- ActionBar styles -->
+    <style name="MyActionBar"
+           parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@drawable/actionbar_background</item>
+
+        <!-- Support library compatibility -->
+    </style>
 </resources>

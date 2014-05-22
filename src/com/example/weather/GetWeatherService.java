@@ -4,183 +4,255 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.net.URI;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 public class GetWeatherService extends Service {
-	
-	
-	final String LOG_TAG = "GetWeatherServiceLogs";
-	private static int cityId = 0;
-	
-	
-	public void onCreate() {
-	    super.onCreate();
-	}
-	  
+	//Service constants
+	private final String LOG_TAG = "GetWeatherServiceLogs";
+	private final static String weatherUri = "http://api.openweathermap.org/data/2.5/weather";
+	private final static String forecastUri = "http://api.openweathermap.org/data/2.5/forecast/daily";
+	//Service Actions
+	public final static String ACTION_NEW_CITY = "AddNewCity";
+	public final static String ACTION_UPDATE_WEATHER = "UpdateAll";
+	//Service extra data names
+	public final static String EXTRA_CITY_SERVER_ID = "EXTRA_CITY_SERVER_ID";
+	public final static String EXTRA_RESULT_BOOL = "EXTRA_RESULT_BOOL";
+	public final static String EXTRA_RESULT_MESSAGE = "EXTRA_RESULT_DATA";
+	//Service var
+	private static int forecastLength = 3;
+	private static boolean showNotifications = true;
+	private static String currentAction = ACTION_UPDATE_WEATHER;
+	//Service objects
+	private static DBworker db = null;
+	private static ContentResolver contentResolver = null;
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		cityId = intent.getIntExtra("cityId", 5128638);
-	    getWeather();
+		if( intent!=null ){
+			contentResolver = getContentResolver();
+			getPreferences();
+			db = new DBworker(contentResolver);
+			String action = intent.getAction();
+			if(isConnected()){
+				if (action.equals(ACTION_UPDATE_WEATHER)) {
+					currentAction = ACTION_UPDATE_WEATHER;
+					
+					int citiesServerId[] = db.getCityServerIdArray();
+					URI urisForecast[] = new URI[citiesServerId.length];
+					
+					for (int i = 0; i < citiesServerId.length ; i++) {
+						urisForecast[i] = URI.create(forecastUri + "?id=" + citiesServerId[i] + "&units=metric&cnt=" + forecastLength);
+					}
+					
+					new GetHttpWeather().execute(urisForecast);
+					
+			    } else if (action.equals(ACTION_NEW_CITY)) {
+			    	currentAction = ACTION_NEW_CITY;
+			    	int cityId = intent.getIntExtra(GetWeatherService.EXTRA_CITY_SERVER_ID, 0);
+			    	new GetHttpCityWeather().execute(URI.create(weatherUri + "?id=" + cityId + "&units=metric"));
+					new GetHttpWeather().execute(URI.create(forecastUri + "?id=" + cityId + "&units=metric&cnt=" + forecastLength));
+			    }
+			} else {
+				sendBroadcastService(false, getString(R.string.toast_no_connection));
+				this.stopSelf();
+			}
+		} 
 	    return super.onStartCommand(intent, flags, startId);
 	}
+	
+	private void getPreferences() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		forecastLength = Integer.parseInt(prefs.getString(SettingsActivity.PREF_FORECAST_LENGTH, String.valueOf(forecastLength)));
+		showNotifications = prefs.getBoolean(SettingsActivity.PREF_SHOW_NOTIFICATIONS, true);
+	}
 
-	
-	public void onDestroy() {
-	    super.onDestroy();
-	}
-	
-	
-	@Override
-	public IBinder onBind(Intent arg0) {
-		return null;
-	}
-	
-	
-	private void getWeather() {
-		new HttpAsyncTask().execute("http://api.openweathermap.org/data/2.5/weather?id=" + cityId + "&units=metric");
-	}
-	
-	
-	public String GET(String url) {
+	private String GET(URI url) {
 		InputStream inputStream = null;
 		String result = "";
-		if(isConnected()){
-			try {
-				HttpClient httpclient = new DefaultHttpClient();
-				HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
-				inputStream = httpResponse.getEntity().getContent();
-				if (inputStream != null) {
-					result = convertInputStreamToString(inputStream);
-				} else {
-					result = "Did not work!";
-				}
-			} catch (Exception e) {
-				Log.d("InputStream", e.getLocalizedMessage());
+		try {
+			HttpClient httpclient = new DefaultHttpClient();
+			HttpResponse httpResponse = httpclient.execute(new HttpGet(url.toString()));
+			inputStream = httpResponse.getEntity().getContent();
+			if (inputStream != null) {
+				result = convertInputStreamToString(inputStream);
+			} else {
+				result = "Cant get data.";
 			}
+		} catch (Exception e) {
+			Log.d("InputStream", e.getLocalizedMessage());
 		}
 		return result;
 	}
 
-	
-	private static String convertInputStreamToString(InputStream inputStream)
-			throws IOException {
-		BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
-		String line = "";
-		String result = "";
-		while ((line = bufferedReader.readLine()) != null) result += line;
-		inputStream.close();
+	private static String convertInputStreamToString(InputStream inputStream) {
+		String line = "", result = "";
+		try {
+			BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
+			while ((line = bufferedReader.readLine()) != null) result += line;
+			inputStream.close();
+		} catch (IOException e){
+			e.printStackTrace();
+		}
 		return result;
-
 	}
 
-	
 	public boolean isConnected() {
 		ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Activity.CONNECTIVITY_SERVICE);
 		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-		if (networkInfo != null && networkInfo.isConnected())
-			return true;
-		else
-			return false;
+		return networkInfo != null && networkInfo.isConnected();
 	}
-	
-	
-	private class HttpAsyncTask extends AsyncTask<String, Void, String> {
-		@Override
-		protected String doInBackground(String... urls) {
-			return GET(urls[0]);
-		}
 
+	private class GetHttpCityWeather extends AsyncTask<URI, Void, String[]> {
+		
 		@Override
-		protected void onPostExecute(String result) {
-			updateCityForecast(result);
+		protected String[] doInBackground(URI... querysURI) {
+			String res[] = new String[querysURI.length];
+		     for (int i = 0; i < querysURI.length; i++) {
+	        	 res[i] = GET(querysURI[i]);
+	         }
+			return res;
 		}
-	}
-	
-	
-	public void updateCityForecast(String result){
-		try {
-			JSONObject json = new JSONObject(result);
-			JSONArray jsonArr = json.getJSONArray("weather");
-			
-			JSONObject jsonMain = new JSONObject(json.getString("main"));
-			String country = new JSONObject(json.getString("sys")).getString("country");
-			
-			Date forecastDate = new Date(Long.parseLong(json.getString("dt"))*1000);
-			
-			ContentResolver cr = getContentResolver();
-			Cursor c = cr.query(WeatherContentProvider.WEATHER_CONTENT_URI,
-					 null,
-					 WeatherDB.Cities.CITY_ID + " = " + cityId,
-					 null,
-					 null);
-			if(c.getCount()>0){
-				ContentValues newValues = new ContentValues();
-				
-				newValues.put(WeatherDB.Cities.TEMPERATURE, jsonMain.getString("temp"));
-				newValues.put(WeatherDB.Cities.WEATHER, jsonArr.getJSONObject(0).getString("description"));
-				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
-				newValues.put(WeatherDB.Cities.ICON, "ico90.png");
-				
-				int myRowUri = cr.update(WeatherContentProvider.WEATHER_CONTENT_URI, 
-										 newValues,
-										 WeatherDB.Cities.CITY_ID + " = " + cityId,
-										 null);
-				Log.d(LOG_TAG, "update myRowUri = " + myRowUri);
-				sendBroadcastService(true);
+		
+		@Override
+		protected void onPostExecute(String result[]) {
+			super.onPostExecute(result);
+			updateCityWeatherData(result);
+			String message = "";
+			if(currentAction.equals(ACTION_UPDATE_WEATHER)){
+				message = getString(R.string.service_updated_successfully);
 			} else {
-				ContentValues newValues = new ContentValues();
-				
-				newValues.put(WeatherDB.Cities.CITY_ID, cityId);
-				newValues.put(WeatherDB.Cities.CITY_NAME, json.getString("name"));
-				newValues.put(WeatherDB.Cities.COUNTRY, country);
-				newValues.put(WeatherDB.Cities.FAVOURITE_CITY, "false");
-				newValues.put(WeatherDB.Cities.TEMPERATURE, jsonMain.getString("temp"));
-				newValues.put(WeatherDB.Cities.WEATHER, jsonArr.getJSONObject(0).getString("description"));
-				newValues.put(WeatherDB.Cities.TIME, new SimpleDateFormat("dd-MM-yyyy HH:mm").format(forecastDate));
-				newValues.put(WeatherDB.Cities.ICON, "ico90.png");
-				
-				Uri myRowUri = cr.insert(WeatherContentProvider.WEATHER_CONTENT_URI, newValues);
-				Log.d(LOG_TAG, "insert myRowUri = " + myRowUri);
-				sendBroadcastService(true);
+				message = getString(R.string.service_added_new_city);
 			}
-			c.close();
-			this.stopSelf();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		} catch (Throwable e) {
-			e.printStackTrace();
+			sendBroadcastService(true, message);
+		}
+		
+		private void updateCityWeatherData(String result[]){
+			for (String res : result) {
+				CityObject city = JsonParcers.parceJsonToCityObject(res);
+				db.writeCityObject(city);
+			}
 		}
 	}
 	
+	private class GetHttpWeather extends AsyncTask<URI, Void, String[]> {
+		
+		@Override
+		protected String[] doInBackground(URI... querysURI) {
+			String res[] = new String[querysURI.length];
+		     for (int i = 0; i < querysURI.length; i++) {
+	        	 res[i] = GET(querysURI[i]);
+	         }
+			return res;
+		}
+		
+		@Override
+		protected void onPostExecute(String result[]) {
+			super.onPostExecute(result);
+			updateForecastResult(result);
+			String message = "";
+			if(currentAction.equals(ACTION_UPDATE_WEATHER)){
+				message = getString(R.string.toast_weather_updated);
+			} else {
+				message = getString(R.string.toast_added_new_city);
+			}
+			sendBroadcastService(true, message);
+		}
+		
+		public void updateForecastResult(String result[]){
+			for (String res : result) {
+				WeatherObject weather[] = JsonParcers.parceJsonToWeatherArray(res);
+				db.updateWeather(weather);
+			}
+			updateWidget();
+			if(showNotifications){
+				CityObject defCity = db.getDefaultCity();
+				notificate(defCity, db.getWeatherObjects(defCity.serverId)[0]);
+			}
+		}
+	}	
 	
-	public void sendBroadcastService(boolean update) {  
-		Intent intent = new Intent("custom-event-name");
-		intent.putExtra("update", update);
+	public void sendBroadcastService(boolean serviceResult, String message) {
+		Intent intent = new Intent(currentAction);
+		intent.putExtra(GetWeatherService.EXTRA_RESULT_BOOL, serviceResult);
+		intent.putExtra(GetWeatherService.EXTRA_RESULT_MESSAGE, message);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-	    Log.d(LOG_TAG, "update = " + update);
-	}  
+	}
+	
+	private void notificate(CityObject city,WeatherObject weather){
+		BitmapDrawable contactPicDrawable = (BitmapDrawable) getResources().getDrawable(weather.getImageResourceId(getApplicationContext()));
+		Bitmap contactPic = contactPicDrawable.getBitmap();
 
+		Resources res = getResources();
+		DisplayMetrics metrics = res.getDisplayMetrics();
+		float dp = 64f;
+		int pixels = (int) (metrics.density * dp + 0.5f);
+		contactPic = Bitmap.createScaledBitmap(contactPic, pixels, pixels, false); 
+		NotificationCompat.Builder mBuilder =
+		        new NotificationCompat.Builder(this)
+		        .setSmallIcon(weather.getImageResourceId(getApplicationContext()))
+		        .setContentTitle(weather.temperature + " - " + city.getCityNameCountry())
+		        .setContentText(weather.condition)
+		        .setOngoing(true);
+		mBuilder.setLargeIcon(contactPic);
+		Intent resultIntent = new Intent(this, MainActivity.class);
+		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+		stackBuilder.addParentStack(MainActivity.class);
+		stackBuilder.addNextIntent(resultIntent);
+		PendingIntent resultPendingIntent =
+		        stackBuilder.getPendingIntent(
+		            0,
+		            PendingIntent.FLAG_UPDATE_CURRENT
+		        );
+		mBuilder.setContentIntent(resultPendingIntent);
+		NotificationManager mNotificationManager =
+		    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.notify(0, mBuilder.build());
+	}
+	
+	private void updateWidget() {
+		DBworker db = new DBworker(getContentResolver());
+		CityObject defaultCity = db.getDefaultCity();
+		WeatherObject defaultWeather[] = db.getWeatherObjects(defaultCity.serverId);
+		RemoteViews views = new RemoteViews(getPackageName(), R.layout.widget);
+		views.setTextViewText(R.id.widget_city_name, defaultCity.getCityNameCountry());
+		views.setTextViewText(R.id.widget_weather_temperature, defaultWeather[0].temperature);
+		views.setTextViewText(R.id.widget_weather_condition, defaultWeather[0].condition);
+		views.setImageViewResource(R.id.weather_image, defaultWeather[0].getImageResourceId(getApplicationContext()));
+		AppWidgetManager mgr=AppWidgetManager.getInstance(this);
+		mgr.updateAppWidget(new ComponentName(getPackageName(), MyWidget.class.getName()), views);
+	}
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		return null;
+	}
 }

@@ -16,190 +16,242 @@ public class WeatherContentProvider extends ContentProvider {
 	
 	final String LOG_TAG = "WeatherContentProvider LOG";
 	
-	  // Скрипт создания таблицы
-	  static final String DB_CREATE = "create table " + WeatherDB.Cities.TABLE + "("
-	      + WeatherDB.Cities.ID + " integer primary key autoincrement, "
-	      + WeatherDB.Cities.CITY_ID + " integer, " 
+	  static final String DB_WETAHER_TABLE_CREATE = "create table " + WeatherDB.Cities.TABLE_NAME + "("
+	      + WeatherDB.Cities.CITY_ID + " integer primary key autoincrement, "
+	      + WeatherDB.Cities.SERVER_CITY_ID + " integer, " 
 	      + WeatherDB.Cities.CITY_NAME + " text ,"
-	      + WeatherDB.Cities.COUNTRY + " text ,"
-	      + WeatherDB.Cities.FAVOURITE_CITY + " text ,"
-	      + WeatherDB.Cities.TEMPERATURE + " text ,"
-	      + WeatherDB.Cities.WEATHER + " text ,"
-	      + WeatherDB.Cities.TIME + " text ,"
-	      + WeatherDB.Cities.ICON + " text " + ");";
-
-	  // // Uri
-	  // authority
+	      + WeatherDB.Cities.CITY_COUNTRY + " text ,"
+	      + WeatherDB.Cities.CITY_FAVOURITE + " text );";
+	  
+	  static final String DB_FORECAST_TABLE_CREATE = "create table " + WeatherDB.Weather.TABLE_NAME + "("
+	      + WeatherDB.Weather.WEATHER_ID + " integer primary key autoincrement, "
+	      + WeatherDB.Weather.WEATHER_CITY_ID + " integer, "
+	      + WeatherDB.Weather.WEATHER_TEMPERATURE + " text ,"
+	      + WeatherDB.Weather.WEATHER_CONDITION + " text ,"
+	      + WeatherDB.Weather.WEATHER_IMAGE + " text ,"
+	      + WeatherDB.Weather.WEATHER_DATE + " numeric " + ");";
 	  
 	  // path
-	  static final String WEATHER_PATH = "forecasts";
+	  static final String CITIES_PATH = WeatherDB.Cities.TABLE_NAME;
 
-	  // Общий Uri
+	  public static final Uri CITY_CONTENT_URI = Uri.parse("content://" + WeatherDB.AUTHORITY + "/" + CITIES_PATH);
+	  static final String CITY_CONTENT_TYPE = "vnd.android.cursor.dir/vnd." + WeatherDB.AUTHORITY + "." + CITIES_PATH;
+	  static final String CITY_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd." + WeatherDB.AUTHORITY + "." + CITIES_PATH;
+
+	  static final String WEATHER_PATH = WeatherDB.Weather.TABLE_NAME;
 	  public static final Uri WEATHER_CONTENT_URI = Uri.parse("content://" + WeatherDB.AUTHORITY + "/" + WEATHER_PATH);
-
-	  // Типы данных
-	  // набор строк
 	  static final String WEATHER_CONTENT_TYPE = "vnd.android.cursor.dir/vnd." + WeatherDB.AUTHORITY + "." + WEATHER_PATH;
-
-	  // одна строка
 	  static final String WEATHER_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd." + WeatherDB.AUTHORITY + "." + WEATHER_PATH;
 
-	  //// UriMatcher
-	  // общий Uri
-	  static final int URI_ALL_ROWS = 1;
+	  static final int URI_ALL_ROWS_CITIES = 1;
+	  static final int URI_SINGLE_CITIES = 2;
+	  static final int URI_ALL_ROWS_WEATHER = 3;
+	  static final int URI_SINGLE_WEATHER = 4;
 
-	  // Uri с указанным ID
-	  static final int URI_SINGLE = 2;
-
-	  // описание и создание UriMatcher
 	  private static final UriMatcher uriMatcher;
 	  static {
 	    uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-	    uriMatcher.addURI(WeatherDB.AUTHORITY, WEATHER_PATH, URI_ALL_ROWS);
-	    uriMatcher.addURI(WeatherDB.AUTHORITY, WEATHER_PATH + "/#", URI_SINGLE);
+	    uriMatcher.addURI(WeatherDB.AUTHORITY, CITIES_PATH, URI_ALL_ROWS_CITIES);
+	    uriMatcher.addURI(WeatherDB.AUTHORITY, CITIES_PATH + "/#", URI_SINGLE_CITIES);
+	    uriMatcher.addURI(WeatherDB.AUTHORITY, WEATHER_PATH, URI_ALL_ROWS_WEATHER);
+	    uriMatcher.addURI(WeatherDB.AUTHORITY, WEATHER_PATH + "/#", URI_SINGLE_WEATHER);
 	  }
 
 	  DBHelper dbHelper;
 	  SQLiteDatabase db;
 	  
-	  
 	  public boolean onCreate() {
-		    Log.d(LOG_TAG, "onCreate");
 		    dbHelper = new DBHelper(getContext());
-		    dbHelper.onUpgrade(db, 1, WeatherDB.VERSION);
+		    dbHelper.onUpgrade(db, 7, WeatherDB.VERSION);
 		    return true;
-		  }
+	  }
+	  
+	  public Cursor query(	Uri uri, 
+			  			  	String[] projection,
+			  			  	String selection,
+			  			  	String[] selectionArgs,
+			  			  	String sortOrder) {
+	    
+	    String table_name = "";
+	    
+	    switch (uriMatcher.match(uri)) {
+	    
+	    case URI_ALL_ROWS_CITIES:{
+	      if (TextUtils.isEmpty(sortOrder)) {
+	    	  sortOrder = WeatherDB.Cities.CITY_NAME + " ASC";
+	      }
+	      table_name = WeatherDB.Cities.TABLE_NAME;
+	    }break;
+	    
+	    case URI_SINGLE_CITIES:{
+	      String id = uri.getLastPathSegment();
+	      if (TextUtils.isEmpty(selection)) {
+	    	  selection = WeatherDB.Cities.CITY_ID + " = " + id;
+	      } else {
+	    	  selection = selection + " AND " + WeatherDB.Cities.CITY_ID + " = " + id;
+	      }
+	      table_name = WeatherDB.Cities.TABLE_NAME;
+	    }break;
+	    
+	    case URI_ALL_ROWS_WEATHER:{
+	      if (TextUtils.isEmpty(sortOrder)) {
+	    	  sortOrder = WeatherDB.Weather.WEATHER_DATE + " ASC";
+	      }
+	      table_name = WeatherDB.Weather.TABLE_NAME;
+	    }break;
+	    
+	    case URI_SINGLE_WEATHER:{
+	      String id = uri.getLastPathSegment();
+	      if (TextUtils.isEmpty(selection)) {
+	    	  selection = WeatherDB.Weather.WEATHER_ID + " = " + id;
+	      } else {
+	    	  selection = selection + " AND " + WeatherDB.Weather.WEATHER_ID + " = " + id;
+	      }
+	      table_name = WeatherDB.Weather.TABLE_NAME;
+	    }break;
+	    
+	    default:
+	    	throw new IllegalArgumentException("Wrong URI: " + uri);
+	    }
+	    
+	    db = dbHelper.getWritableDatabase();
+	    Cursor cursor = db.query(table_name, projection, selection, selectionArgs, null, null, sortOrder);
+	    cursor.setNotificationUri(getContext().getContentResolver(), CITY_CONTENT_URI);
+	    return cursor;
+	  }
+		  
 
-		  // чтение
-		  public Cursor query(	
-					Uri uri, 
-	  			  	String[] projection,
-	  			  	String selection,
-	  			  	String[] selectionArgs,
-	  			  	String sortOrder) {
-			  
-		    Log.d(LOG_TAG, "query, " + uri.toString());
-		    
-		    switch (uriMatcher.match(uri)) {
-		    
-		    case URI_ALL_ROWS:{
-		      if (TextUtils.isEmpty(sortOrder)) {
-		    	  sortOrder = WeatherDB.Cities.CITY_NAME + " ASC";
-		      }
+	  public Uri insert(Uri uri, ContentValues values) {
+	    db = dbHelper.getWritableDatabase();
+	    Uri resultUri;
+	    switch(uriMatcher.match(uri)){
+		    case URI_ALL_ROWS_CITIES:{
+		    	long rowID = db.insert(WeatherDB.Cities.TABLE_NAME, null, values);
+			    resultUri = ContentUris.withAppendedId(CITY_CONTENT_URI, rowID);
 		    }break;
-		    
-		    case URI_SINGLE:{
-		      String id = uri.getLastPathSegment();
-		      Log.d(LOG_TAG, "URI_CONTACTS_ID, " + id);
-		      if (TextUtils.isEmpty(selection)) {
-		    	  selection = WeatherDB.Cities.ID + " = " + id;
-		      } else {
-		    	  selection = selection + " AND " + WeatherDB.Cities.ID + " = " + id;
-		      }
+		    case URI_ALL_ROWS_WEATHER:{
+		    	long rowID = db.insert(WeatherDB.Weather.TABLE_NAME, null, values);
+			    resultUri = ContentUris.withAppendedId(WEATHER_CONTENT_URI, rowID);
 		    }break;
-		    
-		    default:
+		    default:{
 		    	throw new IllegalArgumentException("Wrong URI: " + uri);
-		    	
 		    }
-		    
-		    db = dbHelper.getWritableDatabase();
-		    
-		    Cursor cursor = db.query(WeatherDB.Cities.TABLE, projection, selection, selectionArgs, null, null, sortOrder);
-		    cursor.setNotificationUri(getContext().getContentResolver(), WEATHER_CONTENT_URI);
-		    
-		    return cursor;
-		  }
+	    }
+	    
+	    getContext().getContentResolver().notifyChange(resultUri, null);
+	    
+	    return resultUri;
+	  }
+		  
 
-		  public Uri insert(Uri uri, ContentValues values) {
-		    Log.d(LOG_TAG, "insert, " + uri.toString());
-		    
-		    if (uriMatcher.match(uri) != URI_ALL_ROWS){
-		    	throw new IllegalArgumentException("Wrong URI: " + uri);
-		    }
+	  public int delete(Uri uri, String selection, String[] selectionArgs) {
+	    db = dbHelper.getWritableDatabase();
+	    int cnt = 0;
+	    switch (uriMatcher.match(uri)) {
+	    
+	    case URI_ALL_ROWS_CITIES:{
+	    	if (TextUtils.isEmpty(selection)) {
+	    		cnt = 0;
+	    	} else {
+	    		cnt = db.delete(WeatherDB.Cities.TABLE_NAME, selection, selectionArgs);
+	    	}
+	    }break;
+	      
+	    case URI_SINGLE_CITIES:{
+	      String id = uri.getLastPathSegment();
+	      if (TextUtils.isEmpty(selection)) {
+	        selection = WeatherDB.Cities.CITY_ID + " = " + id;
+	      } else {
+	        selection = selection + " AND " + WeatherDB.Cities.CITY_ID + " = " + id;
+	      }
+	      cnt = db.delete(WeatherDB.Cities.TABLE_NAME, selection, selectionArgs);
+	    }break;
+	      
+	    case URI_ALL_ROWS_WEATHER:{
+	    	if (TextUtils.isEmpty(selection)) {
+	    		cnt = 0;
+	    	} else {
+	    		cnt = db.delete(WeatherDB.Weather.TABLE_NAME, selection, selectionArgs);
+	    	}
+	    }break;
+	      
+	    case URI_SINGLE_WEATHER:{
+	      String id = uri.getLastPathSegment();
+	      if (TextUtils.isEmpty(selection)) {
+	        selection = WeatherDB.Weather.WEATHER_ID + " = " + id;
+	      } else {
+	        selection = selection + " AND " + WeatherDB.Weather.WEATHER_ID + " = " + id;
+	      }
+	      cnt = db.delete(WeatherDB.Weather.TABLE_NAME, selection, selectionArgs);
+	    }break;
+	      
+	    default:
+	    	throw new IllegalArgumentException("Wrong URI: " + uri);
+	    }
+	    
+	    getContext().getContentResolver().notifyChange(uri, null);
+	    return cnt;
+	  }
+	  
 
-		    db = dbHelper.getWritableDatabase();
-		    long rowID = db.insert(WeatherDB.Cities.TABLE, null, values);
-		    
-		    Uri resultUri = ContentUris.withAppendedId(WEATHER_CONTENT_URI, rowID);
-		    getContext().getContentResolver().notifyChange(resultUri, null);
-		    
-		    return resultUri;
-		  }
+	  public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+	    String id = "";
+	    db = dbHelper.getWritableDatabase();
+	    int cnt = 0;
+	    switch (uriMatcher.match(uri)) {
+	    
+	    case URI_ALL_ROWS_CITIES:
+	    	cnt = db.update(WeatherDB.Cities.TABLE_NAME, values, selection, selectionArgs);
+	    break;
+	      
+	    case URI_SINGLE_CITIES:
+	      id = uri.getLastPathSegment();
+	      
+	      if (TextUtils.isEmpty(selection)) {
+	    	  selection = WeatherDB.Cities.CITY_ID + " = " + id;
+	      } else {
+	    	  selection = selection + " AND " + WeatherDB.Cities.CITY_ID + " = " + id;
+	      }
+	      cnt = db.update(WeatherDB.Cities.TABLE_NAME, values, selection, selectionArgs);
+	    break;
+	    
+	    case URI_ALL_ROWS_WEATHER:
+	    	cnt = db.update(WeatherDB.Cities.TABLE_NAME, values, selection, selectionArgs);
+	    break;
+	      
+	    case URI_SINGLE_WEATHER:
+	      id = uri.getLastPathSegment();
+	      
+	      if (TextUtils.isEmpty(selection)) {
+	    	  selection = WeatherDB.Weather.WEATHER_ID + " = " + id;
+	      } else {
+	    	  selection = selection + " AND " + WeatherDB.Weather.WEATHER_ID + " = " + id;
+	      }
+	      cnt = db.update(WeatherDB.Weather.TABLE_NAME, values, selection, selectionArgs);
+	    break;
+	      
+	    default:
+	    	throw new IllegalArgumentException("Wrong URI: " + uri);
+	    }
+	    
+	    getContext().getContentResolver().notifyChange(uri, null);
+	    return cnt;
+	  }
 
-		  public int delete(Uri uri, String selection, String[] selectionArgs) {
-		    Log.d(LOG_TAG, "delete, " + uri.toString());
-		    switch (uriMatcher.match(uri)) {
-		    
-		    case URI_ALL_ROWS:{
-		      Log.d(LOG_TAG, "URI_CONTACTS");
-		    }break;
-		      
-		    case URI_SINGLE:{
-		      String id = uri.getLastPathSegment();
-		      Log.d(LOG_TAG, "URI_CONTACTS_ID, " + id);
-		      if (TextUtils.isEmpty(selection)) {
-		        selection = WeatherDB.Cities.ID + " = " + id;
-		      } else {
-		        selection = selection + " AND " + WeatherDB.Cities.ID + " = " + id;
-		      }
-		    }break;
-		      
-		    default:
-		      throw new IllegalArgumentException("Wrong URI: " + uri);
-		      
-		    }
-		    db = dbHelper.getWritableDatabase();
-		    int cnt = db.delete(WeatherDB.Cities.TABLE, selection, selectionArgs);
-		    getContext().getContentResolver().notifyChange(uri, null);
-		    return cnt;
-		  }
-
-		  public int update(Uri uri, ContentValues values, String selection,
-		      String[] selectionArgs) {
-		    Log.d(LOG_TAG, "update, " + uri.toString());
-		    switch (uriMatcher.match(uri)) {
-		    
-		    case URI_ALL_ROWS:
-		      
-		    	Log.d(LOG_TAG, "URI_CONTACTS");
-
-		    break;
-		      
-		    case URI_SINGLE:
-		    	
-		      String id = uri.getLastPathSegment();
-		      Log.d(LOG_TAG, "URI_CONTACTS_ID, " + id);
-		      
-		      if (TextUtils.isEmpty(selection)) {
-		    	  selection = WeatherDB.Cities.ID + " = " + id;
-		      } else {
-		    	  selection = selection + " AND " + WeatherDB.Cities.ID + " = " + id;
-		      }
-		      
-		      break;
-		      
-		    default:
-		    	
-		      throw new IllegalArgumentException("Wrong URI: " + uri);
-		    
-		    }
-		    db = dbHelper.getWritableDatabase();
-		    int cnt = db.update(WeatherDB.Cities.TABLE, values, selection, selectionArgs);
-		    getContext().getContentResolver().notifyChange(uri, null);
-		    return cnt;
-		  }
-
-		  public String getType(Uri uri) {
-		    Log.d(LOG_TAG, "getType, " + uri.toString());
-		    switch (uriMatcher.match(uri)) {
-		    case URI_ALL_ROWS:
-		      return WEATHER_CONTENT_TYPE;
-		    case URI_SINGLE:
-		      return WEATHER_CONTENT_ITEM_TYPE;
-		    }
-		    return null;
-		  }
+	  public String getType(Uri uri) {
+	    Log.d(LOG_TAG, "getType, " + uri.toString());
+	    switch (uriMatcher.match(uri)) {
+	    case URI_ALL_ROWS_CITIES:
+	      return CITY_CONTENT_TYPE;
+	    case URI_SINGLE_CITIES:
+	      return CITY_CONTENT_ITEM_TYPE;
+	    case URI_ALL_ROWS_WEATHER:
+		  return WEATHER_CONTENT_TYPE;
+		case URI_SINGLE_WEATHER:
+		  return WEATHER_CONTENT_ITEM_TYPE;
+	    }
+	    return null;
+	  }
 	
 	 private class DBHelper extends SQLiteOpenHelper {
 
@@ -208,21 +260,24 @@ public class WeatherContentProvider extends ContentProvider {
 	    }
 
 	    public void onCreate(SQLiteDatabase db) {
-	    	db.execSQL(DB_CREATE);
+	    	db.execSQL(DB_WETAHER_TABLE_CREATE);
+	    	db.execSQL(DB_FORECAST_TABLE_CREATE);
 	      	ContentValues cv = new ContentValues();
-	        cv.put(WeatherDB.Cities.CITY_ID, "5128638");
-	        cv.put(WeatherDB.Cities.CITY_NAME, "NYrk");
-	        cv.put(WeatherDB.Cities.COUNTRY, "US");
-	        cv.put(WeatherDB.Cities.FAVOURITE_CITY, "true");
-	        cv.put(WeatherDB.Cities.TEMPERATURE, "-12");
-	        cv.put(WeatherDB.Cities.WEATHER, "Sky is clear");
-	        cv.put(WeatherDB.Cities.TIME, "123213213");
-	        cv.put(WeatherDB.Cities.ICON, "ico90.png");
-	        db.insert(WeatherDB.Cities.TABLE, null, cv);
+	        cv.put(WeatherDB.Cities.SERVER_CITY_ID, 5128581);
+	        cv.put(WeatherDB.Cities.CITY_NAME, "New York");
+	        cv.put(WeatherDB.Cities.CITY_COUNTRY, "US");
+	        cv.put(WeatherDB.Cities.CITY_FAVOURITE, "true");
+	        db.insert(WeatherDB.Cities.TABLE_NAME, null, cv);
+	        cv.clear();
 	    }
 
 	    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-	    	
+	    	if(oldVersion != newVersion){
+	    		db = dbHelper.getWritableDatabase();
+	    		db.execSQL("DROP TABLE IF EXISTS " + WeatherDB.Cities.TABLE_NAME);
+	    		db.execSQL("DROP TABLE IF EXISTS " + WeatherDB.Weather.TABLE_NAME);
+	    		onCreate(db);
+	    	}
 	    }
 	  }
 
