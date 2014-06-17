@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="5dp"
@@ -12,8 +11,11 @@
         android:id="@+id/forecast_weather_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/img01"
-        android:contentDescription="@string/weather_image_description" />
+        android:contentDescription="@string/weather_image_description"
+        android:maxHeight="20dp"
+        android:maxWidth="20dp"
+        android:scaleType="center"
+        android:src="@drawable/img01" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,25 +24,25 @@
         android:padding="0dp" >
 
         <TextView
-            android:id="@+id/forecast_city_weather"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:paddingBottom="5dp"
-            android:textColor="@color/text_blue_color"
-            android:text="@string/city_weather"
-            android:textSize="23sp" >
-        </TextView>
-
-        <TextView
             android:id="@+id/forecast_city_temperature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:paddingBottom="5dp"
+            android:text="@string/city_temper"
             android:textColor="@color/text_blue_color"
-            android:textSize="18sp"
-            android:text="@string/city_temper" >
+            android:textSize="25sp" >
+        </TextView>
+
+        <TextView
+            android:id="@+id/forecast_city_weather"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingBottom="5dp"
+            android:text="@string/city_weather"
+            android:textColor="@color/text_blue_color"
+            android:textSize="16sp" >
         </TextView>
 
         <TextView
@@ -48,9 +50,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:text="@string/city_datetime"
             android:textColor="@color/text_blue_color"
-            android:textSize="18sp"
-            android:text="@string/city_datetime" >
+            android:textSize="16sp" >
         </TextView>
     </LinearLayout>
 

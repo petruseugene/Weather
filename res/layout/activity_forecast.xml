@@ -1,26 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@drawable/activity_background"
+    android:orientation="vertical"
     android:padding="5dp" >
-	
-    
+
     <TextView
         android:id="@+id/cityName"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textAlignment="center"
+        android:layout_margin="5dp"
         android:gravity="center_horizontal"
         android:text="@string/city_name"
+        android:textAlignment="center"
         android:textColor="@color/text_blue_color"
-        android:textSize="30sp"
-        android:layout_margin="5dp" />
+        android:textSize="30sp" />
 
     <ScrollView
-        android:id="@+id/forecas_scrall_view"
+        android:id="@+id/forecast_scroll_view"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" >
 
@@ -31,4 +29,5 @@
             android:orientation="vertical" >
         </LinearLayout>
     </ScrollView>
+
 </LinearLayout>

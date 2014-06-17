@@ -2,30 +2,33 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/back_blue_color"
     android:orientation="vertical"
-    android:padding="5dp"
-    android:background="@color/back_blue_color" >
+    android:padding="5dp" >
 
-            <Button android:id="@+id/add_city_button"
-			        android:text="@string/add_new_city_button"
-			        android:layout_width="fill_parent"
-			        android:layout_height="wrap_content"
-			        android:textColor="@color/text_blue_color" />
-            
-            <Button android:id="@+id/open_settings"
-			        android:text="@string/open_settings"
-			        android:layout_width="fill_parent"
-			        android:layout_height="wrap_content"
-			        android:textColor="@color/text_blue_color" />
-            
+    <Button
+        android:id="@+id/add_city_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/blue_button"
+        android:layout_marginBottom="5dp"
+        android:text="@string/add_new_city_button"
+        android:textColor="@color/text_light_color" />
+    
+    <Button
+        android:id="@+id/open_settings"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/blue_button"
+        android:layout_marginBottom="5dp"
+        android:text="@string/open_settings"
+        android:textColor="@color/text_light_color" />
 
-            <ListView
-                android:id="@+id/left_menu_listView"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/text_blue_color" >
-            </ListView>
-            
-            
+    <ListView
+        android:id="@+id/left_menu_listView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_blue_color" >
+    </ListView>
 
 </LinearLayout>

@@ -11,8 +11,13 @@
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
+    <orderEntry type="module" module-name="android-support-v7-appcompat" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="library (SlidingMenu)" />
+    <orderEntry type="library" name="android-async-http-1.4.4" level="project" />
+    <orderEntry type="library" name="android-support-v4" level="project" />
+    <orderEntry type="library" name="android-support-v7-appcompat" level="project" />
   </component>
 </module>
 

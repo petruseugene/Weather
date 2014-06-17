@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@drawable/activity_background"
+              android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dp">
+
+        <EditText
+            android:id="@+id/edit_search_query"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="10"
+            android:focusable="true"
+            android:inputType="textCapWords"
+            android:textColor="@color/text_blue_color"
+            android:hint="@string/city_name"
+            android:imeOptions="actionSearch">
+
+            <requestFocus/>
+        </EditText>
+
+        <Button
+            android:id="@+id/search_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_blue_color"
+            android:text="@string/find_button"
+            style="@drawable/blue_button"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/city_list_label"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left"
+        android:textSize="20sp"
+        android:layout_margin="5dp"
+        android:text="@string/search_result"
+        android:textColor="@color/text_blue_color"
+        android:visibility="invisible"/>
+
+    <ListView
+        android:id="@+id/list_of_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    </ListView>
+
+</LinearLayout>

@@ -24,18 +24,8 @@
 	        android:layout_width="match_parent"
 	        android:layout_height="match_parent"
 	        android:gravity="center"
-	        android:text="@string/widget_text"
-	        android:textColor="#545454"
-	        android:textSize="16sp"
-	        android:textAlignment="center" >
-	    </TextView>
-	    <TextView
-	        android:id="@+id/widget_weather_condition"
-	        android:layout_width="match_parent"
-	        android:layout_height="match_parent"
-	        android:gravity="center"
-	        android:text="@string/widget_text"
-	        android:textColor="#545454"
+	        android:text="@string/widget_city_name"
+	        android:textColor="@color/text_blue_color"
 	        android:textSize="16sp"
 	        android:textAlignment="center" >
 	    </TextView>
@@ -44,9 +34,19 @@
 	        android:layout_width="match_parent"
 	        android:layout_height="match_parent"
 	        android:gravity="center"
-	        android:text="@string/widget_text"
-	        android:textColor="#545454"
-	        android:textSize="15sp"
+	        android:text="@string/widget_weather_temperature"
+	        android:textColor="@color/text_blue_color"
+	        android:textSize="18sp"
+	        android:textAlignment="center" >
+	    </TextView>
+	    <TextView
+	        android:id="@+id/widget_weather_condition"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        android:gravity="center"
+	        android:text="@string/widget_weather_condition"
+	        android:textColor="@color/text_blue_color"
+	        android:textSize="13sp"
 	        android:textAlignment="center" >
 	    </TextView>
 	</LinearLayout>
