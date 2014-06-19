@@ -7,13 +7,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,6 +36,7 @@ import com.example.weather.Notification;
 import com.example.weather.R;
 import com.example.weather.WeatherWidget;
 import com.example.weather.data.DBworker;
+import com.example.weather.data.WeatherContentProvider;
 import com.example.weather.objects.CityObject;
 import com.example.weather.objects.WeatherObject;
 import com.example.weather.update.GetWeatherService;
@@ -42,15 +48,17 @@ import static com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.LEFT;
 import static com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.SLIDING_WINDOW;
 import static com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.TOUCHMODE_FULLSCREEN;
 
-public class MainActivity extends ActionBarActivity implements OnClickListener{
-	
+public class MainActivity extends ActionBarActivity implements OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+
 	//Activity objects
 	private static CityObject currentCity = null;
 	private static WeatherObject[] defaultWeather = null;
 	private static List<CityObject> cityArrayList = null;
+    private static List<CityObject> cityArrayList2 = null;
+    private static List<WeatherObject> wa = null;
 	//Activity constants
 	public final int ADD_CITY_ACT_ID = 1;
-	//private final static String LOG_TAG = MainActivity.class.getSimpleName();
+	private final String LOG_TAG = MainActivity.class.getSimpleName();
 	//GUI elements
 	private TextView cityName;
 	private TextView cityWeather;
@@ -86,16 +94,27 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 		cityList.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> adapter, View v,	int position, long id) {
-				if(currentCity.getServerCityId() != cityArrayList.get(position).getServerCityId()){
+				if(!currentCity.getServerCityId().equals(cityArrayList.get(position).getServerCityId())){
 					currentCity = cityArrayList.get(position);
 					new UpdateCityOnUI().execute(null, null, null);
 				}
 				menu.toggle();
 			}
 		});
-		
-		new GetCityAndWeatherFromDB().execute(null,null,null);
+		Log.e(LOG_TAG, "start managing loader");
+        getSupportLoaderManager().initLoader(0, null, this);
+//        getContentResolver().registerContentObserver(WeatherContentProvider.WEATHER_CONTENT_URI, true, new ContentObserver(new Handler()) {
+//            @Override
+//            public void onChange(boolean selfChange) {
+//                Log.e(LOG_TAG, "restartLoader");
+//                restartLoader();
+//            }
+//        });
 	}
+
+    private void restartLoader(){
+        getSupportLoaderManager().restartLoader(0, null, this);
+    }
 
 	private void initActionBar() {
 		ActionBar ab = getSupportActionBar();
@@ -173,6 +192,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.main_activity_actions, menu);
 		makeFavourite = menu.findItem(R.id.make_favourite);
+        new GetCityAndWeatherFromDB().execute(null,null,null);
 		return true;
 	}
 	
@@ -298,10 +318,52 @@ public class MainActivity extends ActionBarActivity implements OnClickListener{
 			showToast(mess);
 		}
 	};
-	/* 
-	 * AsyncTask classes for Getting data from content provider, 
-	 * updating data and for delete current city.
-	 */
+
+
+//    @Override
+//    public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
+//        Log.e(LOG_TAG, "onCreateLoader" + id);
+//        return new CursorLoader(this, WeatherContentProvider.CITY_CONTENT_URI,null,null,null,null);
+//    }
+//
+//    @Override
+//    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+//        Log.e(LOG_TAG, "onLoadFinished");
+//        for (CityObject cityObject : cityArrayList2 = DBworker.getCityList(cursor)) {
+//            Log.e(LOG_TAG, cityObject.getCityNameCountry());
+//        }
+//    }
+//
+//    @Override
+//    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+//        Log.e(LOG_TAG, "onLoaderReset");
+//    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
+        Log.e(LOG_TAG, "onCreateLoader" + id);
+        return new CursorLoader(this, WeatherContentProvider.WEATHER_CONTENT_URI,null,null,null,null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        Log.e(LOG_TAG, "onLoadFinished");
+        for (WeatherObject w : wa = DBworker.getWeatherObjects(cursor)) {
+            Log.e(LOG_TAG, w.getCondition());
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        Log.e(LOG_TAG, "onLoaderReset");
+        getSupportLoaderManager().getLoader(0).forceLoad();
+        //wa = null;
+    }
+
+    /*
+     * AsyncTask classes for Getting data from content provider,
+     * updating data and for delete current city.
+     */
 	private class GetCityAndWeatherFromDB extends AsyncTask<Void, Void, Void> {
 
 		@Override

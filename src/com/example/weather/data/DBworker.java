@@ -7,6 +7,7 @@ import android.database.Cursor;
 import com.example.weather.objects.CityObject;
 import com.example.weather.objects.WeatherObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -78,6 +79,26 @@ public class DBworker {
 		}
 		return Arrays.asList(cities); // FIXME WHY??? use list Luke
 	}
+
+    public static List<CityObject> getCityList(Cursor cur) {
+        CityObject cities[] = null;
+        try{
+            //cur = contentResolver.query(WeatherContentProvider.CITY_CONTENT_URI, null, null, null, null);
+            cities = new CityObject[cur.getCount()];
+            for(int i = 0;cur.moveToNext();i++){
+                cities[i] = new CityObject(
+                        cur.getInt(cur.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_NAME)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_COUNTRY)),
+                        Boolean.parseBoolean(cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_FAVOURITE))));
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            if (cur != null) { cur.close(); }
+        }
+        return Arrays.asList(cities); // FIXME WHY??? use list Luke
+    }
 	
 	public CityObject getCityObject(int cityServerId) {
 		Cursor cur = null;
@@ -123,6 +144,25 @@ public class DBworker {
 		}
 		return weather;
 	}
+
+    public static List<WeatherObject> getWeatherObjects(Cursor cur) {
+        List<WeatherObject> weatherList = new ArrayList<WeatherObject>();
+        try{
+            while(cur.moveToNext()) {
+                weatherList.add(new WeatherObject(
+                        cur.getInt(cur.getColumnIndex(WeatherDB.Weather.WEATHER_CITY_ID)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_TEMPERATURE)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_CONDITION)),
+                        cur.getLong(cur.getColumnIndex(WeatherDB.Weather.WEATHER_DATE)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_IMAGE)) ));
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            if (cur != null) { cur.close(); }
+        }
+        return weatherList;
+    }
 	
 	public boolean writeCityObject(CityObject... city) {
 		boolean result = true;

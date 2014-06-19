@@ -2,7 +2,10 @@ package com.example.weather.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.KeyEvent;
@@ -30,9 +33,41 @@ import com.loopj.android.http.RequestParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class AddNewCityActivity extends ActionBarActivity {
-	
-	//private final String LOG_TAG = AddNewCityActivity.class.getSimpleName();
+public class AddNewCityActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor>{
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        switch (cursorLoader.getId()){
+            case 0:{
+
+            }
+            break;
+            case 1:{
+
+            }
+            break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        switch (cursorLoader.getId()){
+            case 0:{
+
+            }
+            break;
+            case 1:{
+
+            }
+            break;
+        }
+    }
+
+    //private final String LOG_TAG = AddNewCityActivity.class.getSimpleName();
 	//Extra data names constants
 	final public static String NEW_CITY_ID 			= "NEW_CITY_ID";
 	final public static String NEW_CITY_NAME 		= "NEW_CITY_NAME";
