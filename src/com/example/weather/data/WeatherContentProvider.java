@@ -72,7 +72,7 @@ public class WeatherContentProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case URI_ALL_ROWS_CITIES: {
                 if (TextUtils.isEmpty(sortOrder)) {
-                    sortOrder = WeatherDB.Cities.CITY_NAME + " ASC";
+                    sortOrder = WeatherDB.Cities.CITY_FAVOURITE + " ASC";
                 }
                 cursor = db.query(WeatherDB.Cities.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 Log.e(LOG_TAG, "set notification uri " + uri.toString());

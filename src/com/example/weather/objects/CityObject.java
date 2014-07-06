@@ -37,6 +37,10 @@ public class CityObject {
 	public boolean isFavourite(){
 		return this.favourite;
 	}
+
+    public void setFavourite(boolean favourite){
+        this.favourite = favourite;
+    }
 	
 	public String getCityNameCountry(){
 		return String.format("%s, %s", this.name, this.country);

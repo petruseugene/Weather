@@ -7,9 +7,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -52,14 +54,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 
 	//Activity objects
 	private static CityObject currentCity = null;
-	private static WeatherObject[] defaultWeather = null;
+	private static List<WeatherObject> weatherList = null;
 	private static List<CityObject> cityArrayList = null;
-    private static List<CityObject> cityArrayList2 = null;
-    private static List<WeatherObject> wa = null;
 	//Activity constants
 	public final int ADD_CITY_ACT_ID = 1;
 	private final String LOG_TAG = MainActivity.class.getSimpleName();
-	//GUI elements
+    private final int CITY_LOADER = 0;
+    private final int WEATHER_LOADER = 1;
+    //GUI elements
 	private TextView cityName;
 	private TextView cityWeather;
 	private TextView cityTemp;
@@ -92,28 +94,38 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		openSettingsButton.setOnClickListener(this);
 		
 		cityList.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> adapter, View v,	int position, long id) {
-				if(!currentCity.getServerCityId().equals(cityArrayList.get(position).getServerCityId())){
-					currentCity = cityArrayList.get(position);
-					new UpdateCityOnUI().execute(null, null, null);
-				}
-				menu.toggle();
-			}
-		});
-		Log.e(LOG_TAG, "start managing loader");
-        getSupportLoaderManager().initLoader(0, null, this);
-//        getContentResolver().registerContentObserver(WeatherContentProvider.WEATHER_CONTENT_URI, true, new ContentObserver(new Handler()) {
-//            @Override
-//            public void onChange(boolean selfChange) {
-//                Log.e(LOG_TAG, "restartLoader");
-//                restartLoader();
-//            }
-//        });
+            @Override
+            public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
+                if (!currentCity.getServerCityId().equals(cityArrayList.get(position).getServerCityId())) {
+                    currentCity = cityArrayList.get(position);
+                    updateMainUI();
+                }
+                menu.toggle();
+            }
+        });
+        startLoader();
+        getContentResolver().registerContentObserver(WeatherContentProvider.WEATHER_CONTENT_URI, true, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                restartLoader();
+            }
+        });
+        getContentResolver().registerContentObserver(WeatherContentProvider.CITY_CONTENT_URI, true, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                restartLoader();
+            }
+        });
 	}
 
+    private void startLoader(){
+        getSupportLoaderManager().initLoader(CITY_LOADER, null, this);
+        getSupportLoaderManager().initLoader(WEATHER_LOADER, null, this);
+    }
+
     private void restartLoader(){
-        getSupportLoaderManager().restartLoader(0, null, this);
+        getSupportLoaderManager().restartLoader(WEATHER_LOADER, null, this);
+        getSupportLoaderManager().restartLoader(CITY_LOADER, null, this);
     }
 
 	private void initActionBar() {
@@ -178,13 +190,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	
 	@Override
 	protected void onStart() {
-		LocalBroadcastManager.getInstance(this).registerReceiver(serviceReciever, new IntentFilter(GetWeatherService.BROADCAST_NAME));
+		LocalBroadcastManager.getInstance(this).registerReceiver(serviceReceiver, new IntentFilter(GetWeatherService.BROADCAST_NAME));
 		super.onStart();
 	}
 	
 	@Override
 	protected void onStop() {
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceReciever);
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceReceiver);
 		super.onStop();
 	}
 	
@@ -192,7 +204,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.main_activity_actions, menu);
 		makeFavourite = menu.findItem(R.id.make_favourite);
-        new GetCityAndWeatherFromDB().execute(null,null,null);
+        makeFavourite.setIcon(R.drawable.ic_menu_star_on);
 		return true;
 	}
 	
@@ -224,25 +236,31 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	 */
 	private void updateMainUI(){
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-		for (CityObject city : cityArrayList) {
-			adapter.add(city.getCityNameCountry());
-		}
-		adapter.notifyDataSetChanged();
-		cityList.setAdapter(adapter);
-		
-		cityName.setText(currentCity.getCityNameCountry());
-		if(currentCity.isFavourite()){
-			makeFavourite.setIcon(R.drawable.ic_menu_star_on);
-		} else {
-			makeFavourite.setIcon(R.drawable.ic_menu_star_off);
-		}
-		if( defaultWeather != null && defaultWeather[0] != null){
-			WeatherObject todaysWeather = defaultWeather[0];
-			cityTemp.setText(todaysWeather.getTemperature());
-			cityWeather.setText(todaysWeather.getCondition());
-			cityDate.setText(todaysWeather.getFormattedDate());
-			weatherImage.setImageResource(todaysWeather.getImageResourceId(getApplicationContext()));
-		}
+        if(cityArrayList != null){
+            for (CityObject city : cityArrayList) {
+                adapter.add(city.getCityNameCountry());
+            }
+            adapter.notifyDataSetChanged();
+            cityList.setAdapter(adapter);
+        }
+        if(currentCity != null){
+            cityName.setText(currentCity.getCityNameCountry());
+            WeatherObject todayWeather = getWeatherToday(currentCity.getServerCityId());
+            if( todayWeather != null){
+                cityTemp.setText(todayWeather.getTemperature());
+                cityWeather.setText(todayWeather.getCondition());
+                cityDate.setText(todayWeather.getFormattedDate());
+                weatherImage.setImageResource(todayWeather.getImageResourceId(getApplicationContext()));
+            }
+            if(makeFavourite != null){
+                if(currentCity.isFavourite()){
+                    makeFavourite.setIcon(R.drawable.ic_menu_star_on);
+                } else {
+                    makeFavourite.setIcon(R.drawable.ic_menu_star_off);
+                }
+            }
+        }
+
 	}
 	/* 
 	 * Starts service to update data and update UI.
@@ -278,16 +296,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	 * Making city favorite, updating UI, notification and widget. 
 	 */
 	private void makeCurrantCityFavorite() {
-		DBworker db = new DBworker(getContentResolver());
-		if(db.makeCityFavourite(currentCity)){
-			new GetCityAndWeatherFromDB().execute(null, null, null);
-			WeatherWidget.updateWidget(this);
-			if(showNotifications){
-				Notification.notification(this, currentCity, defaultWeather[0]);
-			}
-		} else {
-			showToast(getString(R.string.toast_cant_make_favourite));
-		}
+        new MakeCurrentCityFavourite().execute(this, null, null);
 	}
 	/* 
 	 * Receiving new city data from AddNewCity Activity.
@@ -299,102 +308,127 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				   							data.getStringExtra(AddNewCityActivity.NEW_CITY_NAME),
 				   							data.getStringExtra(AddNewCityActivity.NEW_CITY_COUNTRY),
 				   							false);
-		   new DBworker(this.getContentResolver()).writeCityObject(currentCity);  // FIXME come on
-		   startServiceToUpdateData();
+		   new AddNewCity().execute(null, null, null);
 	   }
 	}
 	/* 
 	 * AsyncTask classes for Getting data from content provider, 
 	 * updating data and for delete current city.
 	 */
-	private BroadcastReceiver serviceReciever = new BroadcastReceiver() {
+	private BroadcastReceiver serviceReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			boolean isUpdated = intent.getBooleanExtra(GetWeatherService.EXTRA_RESULT_BOOL, false);
 			String mess = intent.getStringExtra(GetWeatherService.EXTRA_RESULT_MESSAGE);
-			if(isUpdated) {
-				new UpdateCityOnUI().execute(null, null, null);
-			}
 			showToast(mess);
 		}
 	};
 
-
-//    @Override
-//    public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
-//        Log.e(LOG_TAG, "onCreateLoader" + id);
-//        return new CursorLoader(this, WeatherContentProvider.CITY_CONTENT_URI,null,null,null,null);
-//    }
-//
-//    @Override
-//    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-//        Log.e(LOG_TAG, "onLoadFinished");
-//        for (CityObject cityObject : cityArrayList2 = DBworker.getCityList(cursor)) {
-//            Log.e(LOG_TAG, cityObject.getCityNameCountry());
-//        }
-//    }
-//
-//    @Override
-//    public void onLoaderReset(Loader<Cursor> cursorLoader) {
-//        Log.e(LOG_TAG, "onLoaderReset");
-//    }
-
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
-        Log.e(LOG_TAG, "onCreateLoader" + id);
-        return new CursorLoader(this, WeatherContentProvider.WEATHER_CONTENT_URI,null,null,null,null);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        Log.e(LOG_TAG, "onLoadFinished");
-        for (WeatherObject w : wa = DBworker.getWeatherObjects(cursor)) {
-            Log.e(LOG_TAG, w.getCondition());
+        switch (id){
+            case WEATHER_LOADER:{
+                return new CursorLoader(this, WeatherContentProvider.WEATHER_CONTENT_URI,null, null, null, null);
+            }
+            case CITY_LOADER:{
+                return new CursorLoader(this, WeatherContentProvider.CITY_CONTENT_URI,null,null,null,null);
+            }
+            default:{
+                return null;
+            }
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> cursorLoader) {
-        Log.e(LOG_TAG, "onLoaderReset");
-        getSupportLoaderManager().getLoader(0).forceLoad();
-        //wa = null;
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        int loaderId = cursorLoader.getId();
+        switch (loaderId){
+            case WEATHER_LOADER:{
+                 weatherList = DBworker.getWeatherObjects(cursor);
+            } break;
+            case CITY_LOADER:{
+                for (CityObject city : cityArrayList = DBworker.getCityList(cursor)) {
+                    if(city.isFavourite() && currentCity == null){
+                        currentCity = city;
+                    }
+                }
+            } break;
+        }
+        updateMainUI();
     }
 
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        int loaderId = cursorLoader.getId();
+        switch (loaderId){
+            case WEATHER_LOADER:{
+                weatherList = null;
+            } break;
+            case CITY_LOADER:{
+                cityArrayList = null;
+            } break;
+        }
+        getSupportLoaderManager().getLoader(loaderId).forceLoad();
+    }
+
+    private WeatherObject getWeatherToday(int cityServerId){
+        if(weatherList != null){
+            for(WeatherObject weather : weatherList){
+                if(weather.getServerCityId().equals(cityServerId)){
+                    return weather;
+                }
+            }
+            return null;
+        } else {
+            return null;
+        }
+    }
     /*
-     * AsyncTask classes for Getting data from content provider,
-     * updating data and for delete current city.
-     */
-	private class GetCityAndWeatherFromDB extends AsyncTask<Void, Void, Void> {
-
-		@Override
-		protected Void doInBackground(Void... params) {
-			getCityAndWeatherData();
-			return null;
-		}
-		
-		@Override
-		protected void onPostExecute(Void param) {
-			updateMainUI();
-		}
-		
-	}
-	/* 
-	 * AsyncTask to update city on UI.
+	 * AsyncTask to add new city and update UI.
 	 */
-	private class UpdateCityOnUI extends AsyncTask<Void, Void, Void> {
+    private class AddNewCity extends AsyncTask<Void, Void, Void> {
 
-		@Override
-		protected Void doInBackground(Void... params) {
-			getCityData();
-			return null;
-		}
-		
-		@Override
-		protected void onPostExecute(Void param) {
-			updateMainUI();
-		}
-		
-	}
+        @Override
+        protected Void doInBackground(Void... params) {
+            DBworker db = new DBworker(getContentResolver());
+            db.writeCityObject(currentCity);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void param) {
+            startServiceToUpdateData();
+        }
+
+    }
+    /*
+	 * AsyncTask to make current city favourite and update UI.
+	 */
+    private class MakeCurrentCityFavourite extends AsyncTask<Context, Void, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Context... contexts) {
+            Context context = contexts[0];
+            Boolean madeFavourite = false;
+            if(currentCity != null && context != null && weatherList != null){
+                DBworker db = new DBworker(context.getContentResolver());
+                if(madeFavourite = db.makeCityFavourite(currentCity)){
+                    WeatherWidget.updateWidget(context);
+                    if(showNotifications){
+                        Notification.notification(context, currentCity, weatherList.get(0));
+                    }
+                }
+            }
+            return madeFavourite;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isAdded) {
+            if(!isAdded){
+                showToast(getString(R.string.toast_cant_make_favourite));
+            }
+        }
+
+    }
 	/* 
 	 * AsyncTask to delete current city and update UI.
 	 */
@@ -402,40 +436,20 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			return deleteCurrentCityData();
+            DBworker db = new DBworker(getContentResolver());
+            return db.deleteCity(currentCity);
 		}
 		
 		@Override
 		protected void onPostExecute(Boolean param) {
 			if(param){
-				new GetCityAndWeatherFromDB().execute(null, null, null);
+				currentCity = null;
 			} else {
 				showToast(getString(R.string.toast_cant_delete));
 			}
 		}
 		
 	}
-	/* 
-	 * Data manipulations methods (for AsyncTask classes).
-	 */
-	private void getCityData() {
-		DBworker db = new DBworker(getContentResolver());
-		cityArrayList = db.getCityList();
-		defaultWeather = db.getWeatherObjects(currentCity.getServerCityId());
-	}
-	
-	private boolean deleteCurrentCityData() {
-		DBworker db = new DBworker(getContentResolver());
-		return db.deleteCity(currentCity);
-	}
-	
-	private void getCityAndWeatherData() {
-		DBworker db = new DBworker(getContentResolver());
-    	currentCity = db.getDefaultCity();
-    	cityArrayList = db.getCityList();
-    	defaultWeather = db.getWeatherObjects(currentCity.getServerCityId());
-	}
-	
 	/* 
 	 * UI toast method.
 	 */

@@ -26,6 +26,7 @@ import com.example.weather.R;
 import com.example.weather.data.DBworker;
 import com.example.weather.objects.CityObject;
 import com.example.weather.objects.JsonParcers;
+import com.example.weather.update.GetWeatherService;
 import com.example.weather.update.WeatherRestClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
@@ -214,6 +215,7 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 					    intent.putExtra(NEW_CITY_NAME, cityArray[position].getName());
 					    intent.putExtra(NEW_CITY_COUNTRY, cityArray[position].getCountry());
 					    setResult(RESULT_OK, intent);
+                        startServiceToUpdateData();
 					    progressDialog.cancel();
 					    finish();
 				    } else {
@@ -228,5 +230,9 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 			progressDialog.hide();
 		}
 	}
+    private void startServiceToUpdateData() {
+        Intent serviceIntent = new Intent(this, GetWeatherService.class);
+        startService(serviceIntent);
+    }
 		
 }

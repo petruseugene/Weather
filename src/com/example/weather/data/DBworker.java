@@ -3,6 +3,7 @@ package com.example.weather.data;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Log;
 
 import com.example.weather.objects.CityObject;
 import com.example.weather.objects.WeatherObject;
@@ -12,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DBworker {
-	
+
 	//private static final String LOG_TAG = DBworker.class.getSimpleName(); 
 	
 	private ContentResolver contentResolver;
@@ -125,7 +126,7 @@ public class DBworker {
 		Cursor cur = null;
 		WeatherObject weather[] = null;
 		try{
-			cur = contentResolver.query(WeatherContentProvider.WEATHER_CONTENT_URI, null, WeatherDB.Weather.WEATHER_CITY_ID + " = " + cityServerId, null, null);
+			cur = contentResolver.query(WeatherContentProvider.WEATHER_CONTENT_URI, null, null, null, null);
 			weather = new WeatherObject[cur.getCount()];
 			int i =0;
 			while(cur.moveToNext()) {
@@ -228,14 +229,17 @@ public class DBworker {
 	    						 			    cv,
 	    						 			    WeatherDB.Cities.SERVER_CITY_ID + " = " + city.getServerCityId(),
 	    						 			    null);
-	    	if(res > 0) return true;
+	    	if(res > 0){
+                city.setFavourite(true);
+                return true;
+            }
 		}
     	return false;
 	}
 	
 	public boolean deleteCity(CityObject cityObject) {
 		boolean result = false;
-    	if(isCityExist(cityObject.getServerCityId())){
+    	if(isCityExist(cityObject.getServerCityId()) && this.getCityList().size() > 1){
     		this.deleteWeather(cityObject.getServerCityId());
     		this.deleteCity(cityObject.getServerCityId());
 	    	if(cityObject.isFavourite()) {
@@ -245,7 +249,7 @@ public class DBworker {
     	}
     	return result;
 	}
-	
+
 	public boolean deleteWeather(int... cityserverId) {
 		int countDelete = 0;
 		for (int serverId : cityserverId) {
