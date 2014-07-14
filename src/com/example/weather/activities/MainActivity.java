@@ -20,7 +20,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -103,29 +102,28 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
                 menu.toggle();
             }
         });
-        startLoader();
+        startLoader(CITY_LOADER);
+        startLoader(WEATHER_LOADER);
         getContentResolver().registerContentObserver(WeatherContentProvider.WEATHER_CONTENT_URI, true, new ContentObserver(new Handler()) {
             @Override
             public void onChange(boolean selfChange) {
-                restartLoader();
+                restartLoader(WEATHER_LOADER);
             }
         });
         getContentResolver().registerContentObserver(WeatherContentProvider.CITY_CONTENT_URI, true, new ContentObserver(new Handler()) {
             @Override
             public void onChange(boolean selfChange) {
-                restartLoader();
+                restartLoader(CITY_LOADER);
             }
         });
 	}
 
-    private void startLoader(){
-        getSupportLoaderManager().initLoader(CITY_LOADER, null, this);
-        getSupportLoaderManager().initLoader(WEATHER_LOADER, null, this);
+    private void startLoader(int loaderId){
+        getSupportLoaderManager().initLoader(loaderId, null, this);
     }
 
-    private void restartLoader(){
-        getSupportLoaderManager().restartLoader(WEATHER_LOADER, null, this);
-        getSupportLoaderManager().restartLoader(CITY_LOADER, null, this);
+    private void restartLoader(int loaderId){
+        getSupportLoaderManager().restartLoader(loaderId, null, this);
     }
 
 	private void initActionBar() {

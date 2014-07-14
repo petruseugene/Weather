@@ -126,7 +126,7 @@ public class DBworker {
 		Cursor cur = null;
 		WeatherObject weather[] = null;
 		try{
-			cur = contentResolver.query(WeatherContentProvider.WEATHER_CONTENT_URI, null, null, null, null);
+			cur = contentResolver.query(WeatherContentProvider.WEATHER_CONTENT_URI, null, WeatherDB.Weather.WEATHER_CITY_ID + " = " + cityServerId, null, null);
 			weather = new WeatherObject[cur.getCount()];
 			int i =0;
 			while(cur.moveToNext()) {

@@ -14,7 +14,7 @@ import android.util.Log;
 
 public class WeatherContentProvider extends ContentProvider {
 
-    final String LOG_TAG = "WeatherContentProvider LOG";
+    //final String LOG_TAG = WeatherContentProvider.class.getSimpleName();
 
     static final String DB_WEAtHER_TABLE_CREATE = "create table " + WeatherDB.Cities.TABLE_NAME + "("
             + WeatherDB.Cities.CITY_ID + " integer primary key autoincrement, "
@@ -75,7 +75,6 @@ public class WeatherContentProvider extends ContentProvider {
                     sortOrder = WeatherDB.Cities.CITY_FAVOURITE + " ASC";
                 }
                 cursor = db.query(WeatherDB.Cities.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
-                Log.e(LOG_TAG, "set notification uri " + uri.toString());
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 return cursor;
             }
@@ -87,7 +86,6 @@ public class WeatherContentProvider extends ContentProvider {
                     selection = selection + " AND " + WeatherDB.Cities.CITY_ID + " = " + id;
                 }
                 cursor = db.query(WeatherDB.Cities.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
-                Log.e(LOG_TAG, "set notification uri " + uri.toString());
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 return cursor;
             }
@@ -96,7 +94,6 @@ public class WeatherContentProvider extends ContentProvider {
                     sortOrder = WeatherDB.Weather.WEATHER_DATE + " ASC";
                 }
                 cursor = db.query(WeatherDB.Weather.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
-                Log.e(LOG_TAG, "set notification uri " + uri.toString());
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 return cursor;
             }
@@ -108,7 +105,6 @@ public class WeatherContentProvider extends ContentProvider {
                     selection = selection + " AND " + WeatherDB.Weather.WEATHER_ID + " = " + id;
                 }
                 cursor = db.query(WeatherDB.Weather.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
-                Log.e(LOG_TAG, "set notification uri " + uri.toString());
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 return cursor;
             }
@@ -123,14 +119,12 @@ public class WeatherContentProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case URI_ALL_ROWS_CITIES: {
                 long rowID = db.insert(WeatherDB.Cities.TABLE_NAME, null, values);
-                Log.e(LOG_TAG, "notify insert " + uri.toString());
                 resultUri = ContentUris.withAppendedId(uri, rowID);
                 getContext().getContentResolver().notifyChange(resultUri, null);
                 return resultUri;
             }
             case URI_ALL_ROWS_WEATHER: {
                 long rowID = db.insert(WeatherDB.Weather.TABLE_NAME, null, values);
-                Log.e(LOG_TAG, "notify insert " + uri.toString());
                 resultUri = ContentUris.withAppendedId(uri, rowID);
                 getContext().getContentResolver().notifyChange(resultUri, null);
                 return resultUri;
@@ -151,7 +145,6 @@ public class WeatherContentProvider extends ContentProvider {
                 } else {
                     cnt = db.delete(WeatherDB.Cities.TABLE_NAME, selection, selectionArgs);
                 }
-                Log.e(LOG_TAG, "notify delete " + uri.toString());
                 getContext().getContentResolver().notifyChange(uri, null);
                 return cnt;
             }
@@ -163,7 +156,6 @@ public class WeatherContentProvider extends ContentProvider {
                     selection = selection + " AND " + WeatherDB.Cities.CITY_ID + " = " + id;
                 }
                 cnt = db.delete(WeatherDB.Cities.TABLE_NAME, selection, selectionArgs);
-                Log.e(LOG_TAG, "notify delete " + uri.toString());
                 getContext().getContentResolver().notifyChange(uri, null);
                 return cnt;
             }
@@ -173,7 +165,6 @@ public class WeatherContentProvider extends ContentProvider {
                 } else {
                     cnt = db.delete(WeatherDB.Weather.TABLE_NAME, selection, selectionArgs);
                 }
-                Log.e(LOG_TAG, "notify delete " + uri.toString());
                 getContext().getContentResolver().notifyChange(uri, null);
                 return cnt;
             }
@@ -185,7 +176,6 @@ public class WeatherContentProvider extends ContentProvider {
                     selection = selection + " AND " + WeatherDB.Weather.WEATHER_ID + " = " + id;
                 }
                 cnt = db.delete(WeatherDB.Weather.TABLE_NAME, selection, selectionArgs);
-                Log.e(LOG_TAG, "notify delete " + uri.toString());
                 getContext().getContentResolver().notifyChange(uri, null);
                 return cnt;
             }
@@ -202,7 +192,6 @@ public class WeatherContentProvider extends ContentProvider {
             case URI_ALL_ROWS_CITIES: {
                 cnt = db.update(WeatherDB.Cities.TABLE_NAME, values, selection, selectionArgs);
                 if( cnt > 0 ){
-                    Log.e(LOG_TAG, "notify update " + uri.toString());
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
                 return cnt;
@@ -216,7 +205,6 @@ public class WeatherContentProvider extends ContentProvider {
                 }
                 cnt = db.update(WeatherDB.Cities.TABLE_NAME, values, selection, selectionArgs);
                 if( cnt > 0 ){
-                    Log.e(LOG_TAG, "notify update " + uri.toString());
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
                 return cnt;
@@ -224,7 +212,6 @@ public class WeatherContentProvider extends ContentProvider {
             case URI_ALL_ROWS_WEATHER: {
                 cnt = db.update(WeatherDB.Weather.TABLE_NAME, values, selection, selectionArgs);
                 if( cnt > 0 ){
-                    Log.e(LOG_TAG, "notify update " + uri.toString());
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
                 return cnt;
@@ -238,7 +225,6 @@ public class WeatherContentProvider extends ContentProvider {
                 }
                 cnt = db.update(WeatherDB.Weather.TABLE_NAME, values, selection, selectionArgs);
                 if( cnt > 0 ){
-                    Log.e(LOG_TAG, "notify update " + uri.toString());
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
                 return cnt;
@@ -249,7 +235,6 @@ public class WeatherContentProvider extends ContentProvider {
     }
 
     public String getType(Uri uri) {
-        Log.d(LOG_TAG, "getType, " + uri.toString());
         switch (uriMatcher.match(uri)) {
             case URI_ALL_ROWS_CITIES:
                 return CITY_CONTENT_TYPE;

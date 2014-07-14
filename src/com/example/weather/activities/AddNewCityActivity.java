@@ -1,10 +1,13 @@
 package com.example.weather.activities;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -24,55 +27,30 @@ import android.widget.Toast;
 
 import com.example.weather.R;
 import com.example.weather.data.DBworker;
+import com.example.weather.data.WeatherContentProvider;
 import com.example.weather.objects.CityObject;
 import com.example.weather.objects.JsonParcers;
 import com.example.weather.update.GetWeatherService;
 import com.example.weather.update.WeatherRestClient;
+import com.example.weather.util.LoadingDialog;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.List;
+
 public class AddNewCityActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor>{
-    @Override
-    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        switch (cursorLoader.getId()){
-            case 0:{
-
-            }
-            break;
-            case 1:{
-
-            }
-            break;
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> cursorLoader) {
-        switch (cursorLoader.getId()){
-            case 0:{
-
-            }
-            break;
-            case 1:{
-
-            }
-            break;
-        }
-    }
 
     //private final String LOG_TAG = AddNewCityActivity.class.getSimpleName();
 	//Extra data names constants
 	final public static String NEW_CITY_ID 			= "NEW_CITY_ID";
 	final public static String NEW_CITY_NAME 		= "NEW_CITY_NAME";
 	final public static String NEW_CITY_COUNTRY 	= "NEW_CITY_COUNTRY";
+    //Dialog constant
+    final public static String LOADING_DIALOG 	    = "LOADING_DIALOG";
+    private final int CITY_LOADER = 0;
 	//RequestParams string constants.
 	final private static String SEARCH_URI 			= "find";
 	final private static String SEARCH_PARAM 		= "q";
@@ -82,12 +60,13 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 	final private static String SEARCH_UNITS_METRIC = "metric";
 	final private static String SEARCH_TYPE 		= "type";
 	final private static String SEARCH_TYPE_LIKE 	= "like";
+    private static List<CityObject> cityArrayList = null;
 	//GUI elements
 	private TextView cityListLabel;
 	private ListView cityList;
 	private Button searchButton;
 	private EditText editSearch;
-	private ProgressDialog progressDialog; // FIXME use dialog fragment, better lifecycle
+	private DialogFragment progressDialog; // FIXME use dialog fragment, better lifecycle
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +75,14 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 		findAllViews();
 		initProgressWindow();
 		initActionBar();
-		
+
+        startLoader(CITY_LOADER);
+        getContentResolver().registerContentObserver(WeatherContentProvider.CITY_CONTENT_URI, true, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                restartLoader(CITY_LOADER);
+            }
+        });
 	    editSearch.setOnEditorActionListener(new OnEditorActionListener() {
 	        @Override
 	        public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -114,21 +100,64 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 			}
 		});
 	}
+
+    private void startLoader(int loaderId){
+        getSupportLoaderManager().initLoader(loaderId, null, this);
+    }
+
+    private void restartLoader(int loaderId){
+        getSupportLoaderManager().restartLoader(loaderId, null, this);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
+        switch (id){
+            case CITY_LOADER:{
+                return new CursorLoader(this, WeatherContentProvider.CITY_CONTENT_URI,null,null,null,null);
+            }
+            default:{
+                return null;
+            }
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        int loaderId = cursorLoader.getId();
+        switch (loaderId){
+            case CITY_LOADER:{
+                cityArrayList = DBworker.getCityList(cursor);
+            } break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        int loaderId = cursorLoader.getId();
+        switch (loaderId){
+            case CITY_LOADER:{
+                cityArrayList = null;
+            } break;
+        }
+        getSupportLoaderManager().getLoader(loaderId).forceLoad();
+    }
 	/* 
 	 * Creating RequestParams and sending search request.
 	 */
 	private void startSearch(){
-		progressDialog.show();
+        showDialogLoading();
 		try {
-        	RequestParams params = new RequestParams();
-            params.put(SEARCH_PARAM, editSearch.getText().toString());
-			params.put(SEARCH_MODE, SEARCH_MODE_JSON);
-			params.put(SEARCH_UNITS, SEARCH_UNITS_METRIC);
-			params.put(SEARCH_TYPE, SEARCH_TYPE_LIKE);
-			searchRequest(SEARCH_URI, params);
+            RequestParams params = new RequestParams();
+            params.put(SEARCH_PARAM, editSearch.getText()+"");
+            params.put(SEARCH_MODE, SEARCH_MODE_JSON);
+            params.put(SEARCH_UNITS, SEARCH_UNITS_METRIC);
+            params.put(SEARCH_TYPE, SEARCH_TYPE_LIKE);
+            searchRequest(SEARCH_URI, params);
     	} catch (JSONException e) {
     		e.printStackTrace();
-    	}
+    	} catch (NullPointerException e){
+            e.printStackTrace();
+        }
 	}
 	/* 
 	 * Sending search request and result handlers.
@@ -143,10 +172,18 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
             
 			@Override
             public void onFailure(Throwable e, JSONObject errorResponse) {
-				progressDialog.hide();
+                hideDialogLoading();
             	super.onFailure(e, errorResponse);
             }
         });
+    }
+
+    private void showDialogLoading(){
+        progressDialog.show(getSupportFragmentManager(), LOADING_DIALOG);
+    }
+
+    private void hideDialogLoading(){
+        progressDialog.dismiss();
     }
 	
 	private void findAllViews() {
@@ -163,10 +200,7 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 	}
 
 	private void initProgressWindow() {
-		progressDialog = new ProgressDialog(this);
-		progressDialog.setMessage(getString(R.string.search_dialog_text));
-	    progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-	    progressDialog.setIndeterminate(true);
+		progressDialog = new LoadingDialog();
 	}
 
 	@Override
@@ -180,11 +214,6 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 	    }
     }
 
-	@Override
-	protected void onDestroy() {
-		progressDialog.cancel();
-		super.onDestroy();
-	}
 	/* 
 	 * Updating SearchActivity UI and hiding loading dialog.
 	 * And sending result to MainActivity.
@@ -203,20 +232,18 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 			cityListLabel.setText(getString(R.string.search_result));
 			cityListLabel.setVisibility(View.VISIBLE);
 			cityList.setVisibility(View.VISIBLE);
-			progressDialog.hide();
+			hideDialogLoading();
 			
 			cityList.setOnItemClickListener(new OnItemClickListener() {
 				@Override
 				public void onItemClick(AdapterView<?> adapter, View v,	int position, long id) {
-					DBworker db = new DBworker(getContentResolver()); // FIXME no DB in UI please
-					if( !db.isCityExist(cityArray[position].getServerCityId()) ) {
+					if( !isCityExist(cityArray[position]) ) {
 						Intent intent = new Intent();
 					    intent.putExtra(NEW_CITY_ID, cityArray[position].getServerCityId());
 					    intent.putExtra(NEW_CITY_NAME, cityArray[position].getName());
 					    intent.putExtra(NEW_CITY_COUNTRY, cityArray[position].getCountry());
 					    setResult(RESULT_OK, intent);
                         startServiceToUpdateData();
-					    progressDialog.cancel();
 					    finish();
 				    } else {
 				    	Toast.makeText(getBaseContext(), getString(R.string.has_such_city_message), Toast.LENGTH_LONG).show();
@@ -227,12 +254,20 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 			cityListLabel.setText(getString(R.string.search_result_fail));
 			cityListLabel.setVisibility(View.VISIBLE);
 			cityList.setVisibility(View.INVISIBLE);
-			progressDialog.hide();
+			hideDialogLoading();
 		}
 	}
     private void startServiceToUpdateData() {
         Intent serviceIntent = new Intent(this, GetWeatherService.class);
         startService(serviceIntent);
+    }
+
+    private boolean isCityExist(CityObject cityToCheck){
+        boolean isExist = false;
+        for(CityObject city : cityArrayList ){
+            if(city.getServerCityId().equals(cityToCheck.getServerCityId())) isExist = true;
+        }
+        return isExist;
     }
 		
 }
