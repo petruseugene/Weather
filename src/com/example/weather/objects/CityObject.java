@@ -9,10 +9,10 @@ public class CityObject {
 	private Boolean favourite;
 	
 	public CityObject(){
-		serverCityId = null; // FIXME WHY?
+		serverCityId = 0;
 		name		 = "Name";
 		country		 = "Country";
-		favourite	 = null;
+		favourite	 = false;
 	}
 	
 	public CityObject(	int serverId, String name, String country, boolean favourite){

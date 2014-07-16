@@ -1,8 +1,5 @@
 package com.example.weather.update;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,10 +14,13 @@ import com.example.weather.WeatherWidget;
 import com.example.weather.activities.SettingsActivity;
 import com.example.weather.data.DBworker;
 import com.example.weather.objects.CityObject;
-import com.example.weather.objects.JsonParcers;
+import com.example.weather.objects.JsonParsers;
 import com.example.weather.objects.WeatherObject;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class GetWeatherService extends Service {
@@ -39,7 +39,7 @@ public class GetWeatherService extends Service {
 	private final static String METRIC	= "metric";
 	//Service variable
 	private int numOfRequests = 0;
-	private int forecastLength = 3;
+	private int forecastLength = 5;
 	private boolean showNotifications = true;
 	private DBworker db = null;
 	
@@ -69,7 +69,7 @@ public class GetWeatherService extends Service {
             
         	@Override
             public void onSuccess(JSONObject result) {
-    			WeatherObject weather[] = JsonParcers.parceJsonToWeatherArray(result);
+    			WeatherObject weather[] = JsonParsers.parseJsonToWeatherArray(result);
     			db.updateWeather(weather);
         		updateWidgetAndNotification();
         		sendBroadcastService(true, getString(R.string.toast_weather_updated));
@@ -93,7 +93,7 @@ public class GetWeatherService extends Service {
 	
 	private void getPreferences() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		forecastLength = Integer.parseInt(prefs.getString(SettingsActivity.PREF_FORECAST_LENGTH, String.valueOf(forecastLength))); // FIXME make it int!
+		forecastLength = prefs.getInt(SettingsActivity.PREF_FORECAST_LENGTH, forecastLength);
 		showNotifications = prefs.getBoolean(SettingsActivity.PREF_SHOW_NOTIFICATIONS, true);
 	}
 	

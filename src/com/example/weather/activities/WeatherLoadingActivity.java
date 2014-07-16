@@ -40,9 +40,8 @@ public class WeatherLoadingActivity extends Activity {
 		super.onStart();
 	}
 
-    // FIXME MISTAKE
 	@Override
-	protected void onStop() { // was ondestroy
+	protected void onStop() {
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
 		super.onStop();
 	}

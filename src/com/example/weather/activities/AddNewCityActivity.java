@@ -29,7 +29,7 @@ import com.example.weather.R;
 import com.example.weather.data.DBworker;
 import com.example.weather.data.WeatherContentProvider;
 import com.example.weather.objects.CityObject;
-import com.example.weather.objects.JsonParcers;
+import com.example.weather.objects.JsonParsers;
 import com.example.weather.update.GetWeatherService;
 import com.example.weather.update.WeatherRestClient;
 import com.example.weather.util.LoadingDialog;
@@ -66,7 +66,7 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 	private ListView cityList;
 	private Button searchButton;
 	private EditText editSearch;
-	private DialogFragment progressDialog; // FIXME use dialog fragment, better lifecycle
+	private DialogFragment progressDialog;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -142,7 +142,7 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
         getSupportLoaderManager().getLoader(loaderId).forceLoad();
     }
 	/* 
-	 * Creating RequestParams and sending search request.
+	 * Creating RequestParams and sending search  request.
 	 */
 	private void startSearch(){
         showDialogLoading();
@@ -164,16 +164,16 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 	 */
 	private void searchRequest(String urlAddition, RequestParams params) throws JSONException {
 		WeatherRestClient.get(urlAddition, params, new JsonHttpResponseHandler() {
-            
-        	@Override
+
+            @Override
             public void onSuccess(JSONObject result) {
-        		updateSearchResultActivity(result);
+                updateSearchResultActivity(result);
             }
-            
-			@Override
+
+            @Override
             public void onFailure(Throwable e, JSONObject errorResponse) {
                 hideDialogLoading();
-            	super.onFailure(e, errorResponse);
+                super.onFailure(e, errorResponse);
             }
         });
     }
@@ -219,7 +219,7 @@ public class AddNewCityActivity extends ActionBarActivity implements LoaderManag
 	 * And sending result to MainActivity.
 	 */
 	public void updateSearchResultActivity(JSONObject result){
-		final CityObject[] cityArray = JsonParcers.parceSearchJsonToCityObjects(result);
+		final CityObject[] cityArray = JsonParsers.parseSearchJsonToCityObjects(result);
 		if(cityArray != null){
 			String[] listArray = new String[cityArray.length];
 			int i =0;

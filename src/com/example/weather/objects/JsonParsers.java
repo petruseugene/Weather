@@ -4,8 +4,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class JsonParcers {
-	
+public class JsonParsers {
+
+    private static final int MILLIS_MUL = 1000;
 	private static final String JSON_ID 		= "id";
 	private static final String JSON_SYS 		= "sys";
 	private static final String JSON_COUNTRY 	= "country";
@@ -22,7 +23,7 @@ public class JsonParcers {
 	private static final String JSON_ICON_PREFIX 	= "img";
 	private static final String TEMP_METRIC 		= "\u00B0C";
 	
-	public static CityObject[] parceSearchJsonToCityObjects(JSONObject jsonObj) {
+	public static CityObject[] parseSearchJsonToCityObjects(JSONObject jsonObj) {
 		CityObject cityArray[] = null;
 		try{
 			JSONArray jsonArr = jsonObj.getJSONArray(JSON_LIST);
@@ -40,8 +41,8 @@ public class JsonParcers {
 		return cityArray;
 	}
 	
-	public static WeatherObject[] parceJsonToWeatherArray(JSONObject rootJson) {
-		WeatherObject weather[] = null;
+	public static WeatherObject[] parseJsonToWeatherArray(JSONObject rootJson) {
+		WeatherObject weather[];
 		try{
 			JSONObject jsonCity = new JSONObject(rootJson.getString(JSON_CITY));
 			JSONArray jsonListArr = rootJson.getJSONArray(JSON_LIST);
@@ -52,7 +53,7 @@ public class JsonParcers {
 				weather[i] = new WeatherObject(	cityId,
 												listItem.getJSONObject(JSON_TEMP).getString(JSON_MAX)+TEMP_METRIC,
 												listItem.getJSONArray(JSON_WEATHER).getJSONObject(0).getString(JSON_DESCRIPTION),
-												listItem.getLong(JSON_DT)*1000, // FIXME MAGIC?
+												listItem.getLong(JSON_DT)*MILLIS_MUL,
 												JSON_ICON_PREFIX + listItem.getJSONArray(JSON_WEATHER).getJSONObject(0).getString(JSON_ICON).substring(0, 2) );
 			}
 		} catch (JSONException e) {

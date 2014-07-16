@@ -1,10 +1,10 @@
 package com.example.weather.objects;
 
+import android.content.Context;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import android.content.Context;
 
 public class WeatherObject {
 	
@@ -16,14 +16,6 @@ public class WeatherObject {
 	private String condition;
 	private Long date;
 	private String icon;
-	
-	public WeatherObject(){ // FIXME ?
-		serverCityId = null;
-		temperature	 = "temperature";
-		condition	 = "condition";
-		date 		 = null;
-		icon		 = "icon";
-	}
 	
 	public WeatherObject(Integer serverCityId, String temperature, String condition, Long date, String icon){
 		this.serverCityId 	= serverCityId;

@@ -3,7 +3,6 @@ package com.example.weather.data;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.util.Log;
 
 import com.example.weather.objects.CityObject;
 import com.example.weather.objects.WeatherObject;
@@ -107,7 +106,7 @@ public class DBworker {
 		try{
 			cur = contentResolver.query(WeatherContentProvider.CITY_CONTENT_URI, null, WeatherDB.Cities.SERVER_CITY_ID + " = " + cityServerId, null, null);
 			//city = new CityObject(); // FIXME WHy?? to not let null? if not found? its is not obvious
-			if(cur.moveToNext()) { //FIXME why different?? ^^
+			if(cur.moveToFirst()) { //FIXME why different?? ^^
 				city = new CityObject(
 						cur.getInt(cur.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
 						cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_NAME)),
@@ -121,6 +120,24 @@ public class DBworker {
 		}
 		return city;
 	}
+
+    public static CityObject getCityObject(Cursor cursor) {
+        CityObject city = null;
+        try{
+            if(cursor.moveToFirst()) {
+                city = new CityObject(
+                        cursor.getInt(cursor.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
+                        cursor.getString(cursor.getColumnIndex(WeatherDB.Cities.CITY_NAME)),
+                        cursor.getString(cursor.getColumnIndex(WeatherDB.Cities.CITY_COUNTRY)),
+                        Boolean.parseBoolean(cursor.getString(cursor.getColumnIndex(WeatherDB.Cities.CITY_FAVOURITE))));
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) { cursor.close(); }
+        }
+        return city;
+    }
 	
 	public WeatherObject[] getWeatherObjects(int cityServerId) {
 		Cursor cur = null;
