@@ -8,7 +8,6 @@ import com.example.weather.objects.CityObject;
 import com.example.weather.objects.WeatherObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DBworker {
@@ -61,65 +60,39 @@ public class DBworker {
 	
 	public List<CityObject> getCityList() {
 		Cursor cur = null;
-		CityObject cities[] = null;
+        List<CityObject> citiesList = new ArrayList<CityObject>();
 		try{
 			cur = contentResolver.query(WeatherContentProvider.CITY_CONTENT_URI, null, null, null, null);
-			cities = new CityObject[cur.getCount()];
-			for(int i = 0;cur.moveToNext();i++){
-				cities[i] = new CityObject(
-						cur.getInt(cur.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
-						cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_NAME)),
-						cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_COUNTRY)),
-						Boolean.parseBoolean(cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_FAVOURITE))));
+			while(cur.moveToNext()){
+                citiesList.add(new CityObject( cur.getInt(cur.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
+                                               cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_NAME)),
+                                               cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_COUNTRY)),
+                                               Boolean.parseBoolean(cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_FAVOURITE)))));
 			}
 		} catch(Exception e){
 			e.printStackTrace();
 		} finally {
 			if (cur != null) { cur.close(); }	
 		}
-		return Arrays.asList(cities); // FIXME WHY??? use list Luke
+		return citiesList;
 	}
 
     public static List<CityObject> getCityList(Cursor cur) {
-        CityObject cities[] = null;
+        List<CityObject> citiesList = new ArrayList<CityObject>();
         try{
-            //cur = contentResolver.query(WeatherContentProvider.CITY_CONTENT_URI, null, null, null, null);
-            cities = new CityObject[cur.getCount()];
-            for(int i = 0;cur.moveToNext();i++){
-                cities[i] = new CityObject(
-                        cur.getInt(cur.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
+            while(cur.moveToNext()){
+                citiesList.add(new CityObject( cur.getInt(cur.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
                         cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_NAME)),
                         cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_COUNTRY)),
-                        Boolean.parseBoolean(cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_FAVOURITE))));
+                        Boolean.parseBoolean(cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_FAVOURITE)))));
             }
         } catch(Exception e){
             e.printStackTrace();
         } finally {
             if (cur != null) { cur.close(); }
         }
-        return Arrays.asList(cities); // FIXME WHY??? use list Luke
+        return citiesList;
     }
-	
-	public CityObject getCityObject(int cityServerId) {
-		Cursor cur = null;
-		CityObject city = null;
-		try{
-			cur = contentResolver.query(WeatherContentProvider.CITY_CONTENT_URI, null, WeatherDB.Cities.SERVER_CITY_ID + " = " + cityServerId, null, null);
-			//city = new CityObject(); // FIXME WHy?? to not let null? if not found? its is not obvious
-			if(cur.moveToFirst()) { //FIXME why different?? ^^
-				city = new CityObject(
-						cur.getInt(cur.getColumnIndex(WeatherDB.Cities.SERVER_CITY_ID)),
-						cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_NAME)),
-						cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_COUNTRY)),
-						Boolean.parseBoolean(cur.getString(cur.getColumnIndex(WeatherDB.Cities.CITY_FAVOURITE))));
-			}
-		} catch(Exception e){
-			e.printStackTrace();
-		} finally {
-			if (cur != null) { cur.close(); }
-		}
-		return city;
-	}
 
     public static CityObject getCityObject(Cursor cursor) {
         CityObject city = null;
@@ -139,28 +112,25 @@ public class DBworker {
         return city;
     }
 	
-	public WeatherObject[] getWeatherObjects(int cityServerId) {
+	public List<WeatherObject> getWeatherObjects(int cityServerId) {
 		Cursor cur = null;
-		WeatherObject weather[] = null;
+        List<WeatherObject> weatherList = new ArrayList<WeatherObject>();
 		try{
 			cur = contentResolver.query(WeatherContentProvider.WEATHER_CONTENT_URI, null, WeatherDB.Weather.WEATHER_CITY_ID + " = " + cityServerId, null, null);
-			weather = new WeatherObject[cur.getCount()];
-			int i =0;
 			while(cur.moveToNext()) {
-				weather[i] = new WeatherObject(
-						cur.getInt(cur.getColumnIndex(WeatherDB.Weather.WEATHER_CITY_ID)),
-						cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_TEMPERATURE)),
-						cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_CONDITION)),
-						cur.getLong(cur.getColumnIndex(WeatherDB.Weather.WEATHER_DATE)),
-						cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_IMAGE)) );
-				i++;
+                weatherList.add(new WeatherObject(
+                        cur.getInt(cur.getColumnIndex(WeatherDB.Weather.WEATHER_CITY_ID)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_TEMPERATURE)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_CONDITION)),
+                        cur.getLong(cur.getColumnIndex(WeatherDB.Weather.WEATHER_DATE)),
+                        cur.getString(cur.getColumnIndex(WeatherDB.Weather.WEATHER_IMAGE))));
 			}
 		} catch(Exception e){
 			e.printStackTrace();
 		} finally {
 			if (cur != null) { cur.close(); }
 		}
-		return weather;
+		return weatherList;
 	}
 
     public static List<WeatherObject> getWeatherObjects(Cursor cur) {
@@ -239,7 +209,7 @@ public class DBworker {
 		if( city != null && !city.isFavourite() ) {
 			ContentValues cv = new ContentValues();
 	    	cv.put(WeatherDB.Cities.CITY_FAVOURITE, "false");
-	    	contentResolver.update(WeatherContentProvider.CITY_CONTENT_URI, cv, WeatherDB.Cities.CITY_FAVOURITE + " = 'true'", null); // FIXME SUP????
+	    	contentResolver.update(WeatherContentProvider.CITY_CONTENT_URI, cv, WeatherDB.Cities.CITY_FAVOURITE + " = 'true'", null);
 	    	cv.clear();
 	    	cv.put(WeatherDB.Cities.CITY_FAVOURITE, "true");
 	    	int res = contentResolver.update(	WeatherContentProvider.CITY_CONTENT_URI,
@@ -289,10 +259,10 @@ public class DBworker {
 		Boolean result = false;
 		Cursor cur = null;
 		try {
-		cur = contentResolver.query( WeatherContentProvider.CITY_CONTENT_URI,
-									 new String[]{WeatherDB.Cities.SERVER_CITY_ID},
-									 WeatherDB.Cities.SERVER_CITY_ID + " = " + cityServerId, null, null);
-		result = cur.getCount() > 0;
+            cur = contentResolver.query( WeatherContentProvider.CITY_CONTENT_URI,
+                                         new String[]{WeatherDB.Cities.SERVER_CITY_ID},
+                                         WeatherDB.Cities.SERVER_CITY_ID + " = " + cityServerId, null, null);
+            result = cur.getCount() > 0;
 		} catch(Exception e){
 			e.printStackTrace();
 		} finally {

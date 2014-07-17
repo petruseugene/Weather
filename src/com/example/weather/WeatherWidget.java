@@ -1,14 +1,14 @@
 package com.example.weather;
 
-import com.example.weather.data.DBworker;
-import com.example.weather.objects.CityObject;
-import com.example.weather.objects.WeatherObject;
-
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.widget.RemoteViews;
+
+import com.example.weather.data.DBworker;
+import com.example.weather.objects.CityObject;
+import com.example.weather.objects.WeatherObject;
 
 public class WeatherWidget extends AppWidgetProvider {
 
@@ -24,7 +24,7 @@ public class WeatherWidget extends AppWidgetProvider {
 	private static RemoteViews getAndUpdateRemoteViews(Context context) {
 		DBworker db = new DBworker(context.getContentResolver());
 		CityObject defaultCity = db.getDefaultCity();
-		WeatherObject defaultWeather = db.getWeatherObjects(defaultCity.getServerCityId())[0];
+		WeatherObject defaultWeather = db.getWeatherObjects(defaultCity.getServerCityId()).get(0);
 		RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget);
 		views.setTextViewText(R.id.widget_city_name, defaultCity.getCityNameCountry());
 		views.setTextViewText(R.id.widget_weather_temperature, defaultWeather.getTemperature());
