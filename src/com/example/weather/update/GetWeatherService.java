@@ -87,7 +87,7 @@ public class GetWeatherService extends Service {
 		WeatherWidget.updateWidget(this);
 		if(showNotifications) {
 			CityObject defCity = db.getDefaultCity();
-			Notification.notification(this, defCity, db.getWeatherObjects(defCity.getServerCityId())[0]);
+			Notification.notificate(this, defCity, db.getWeatherObjects(defCity.getServerCityId())[0]);
 		}
 	}
 	
