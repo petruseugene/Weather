@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import com.example.weather.Notification;
 import com.example.weather.R;
@@ -102,7 +101,6 @@ public class GetWeatherService extends Service {
 			Intent intent = new Intent(BROADCAST_NAME);
 			intent.putExtra(GetWeatherService.EXTRA_RESULT_BOOL, serviceResult);
 			intent.putExtra(GetWeatherService.EXTRA_RESULT_MESSAGE, message);
-			Log.e("service", "sending broadcast");
 			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 		}
 	}

@@ -9,13 +9,13 @@
         <item>6 days</item>
         <item>7 days</item>
     </string-array>
-    <string-array name="pref_forecast_length_val">
+    <integer-array name="pref_forecast_length_val">
         <item>3</item>
         <item>4</item>
         <item>5</item>
         <item>6</item>
         <item>7</item>
-    </string-array>
-    
+    </integer-array>
+    <integer name="default_forecast_length_val">5</integer>
 
 </resources>

@@ -14,7 +14,7 @@
      android:key="pref_forecast_length"
      android:summary="select length (days)"
      android:title="Forecast length" 
-     android:defaultValue="5"
+     android:defaultValue="@integer/default_forecast_length_val"
      />
   
  </PreferenceCategory>
