@@ -1,11 +1,7 @@
 package com.example.weather.activities;
 
-import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -16,7 +12,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.DisplayMetrics;
@@ -41,6 +36,7 @@ import com.example.weather.data.WeatherContentProvider;
 import com.example.weather.objects.CityObject;
 import com.example.weather.objects.WeatherObject;
 import com.example.weather.update.GetWeatherService;
+import com.example.weather.util.DeleteCityDialog;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import java.util.List;
@@ -57,9 +53,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private static List<CityObject> cityArrayList = null;
 	//Activity constants
 	public final int ADD_CITY_ACT_ID = 1;
-	private final String LOG_TAG = MainActivity.class.getSimpleName();
+	//private final String LOG_TAG = MainActivity.class.getSimpleName();
     private final int CITY_LOADER = 0;
     private final int WEATHER_LOADER = 1;
+    private final String DELETE_DIALOG_KEY = "DELETE_FRAGMENT_DIALOG";
     //GUI elements
 	private TextView cityName;
 	private TextView cityWeather;
@@ -187,18 +184,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	}
 	
 	@Override
-	protected void onStart() {
-		LocalBroadcastManager.getInstance(this).registerReceiver(serviceReceiver, new IntentFilter(GetWeatherService.BROADCAST_NAME));
-		super.onStart();
-	}
-	
-	@Override
-	protected void onStop() {
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceReceiver);
-		super.onStop();
-	}
-	
-	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.main_activity_actions, menu);
 		makeFavourite = menu.findItem(R.id.make_favourite);
@@ -223,7 +208,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		    	makeCurrantCityFavorite();
 		    	return true;
 		    case R.id.delete_city_item:
-		    	deleteCurrentCity();
+		    	showDeleteFragmentDialog();
 		    	return true;
 		    default:
 		        return super.onOptionsItemSelected(item);
@@ -258,7 +243,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
                 }
             }
         }
-
 	}
 	/* 
 	 * Starts service to update data and update UI.
@@ -270,26 +254,12 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	/* 
 	 * Delete current city (Building dialog "Delete city?") and updating UI.
 	 */
-	private void deleteCurrentCity(){
-		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-		dialogBuilder.setTitle(getString(R.string.delete_dialog_title));
-		dialogBuilder.setMessage(String.format(getString(R.string.format_delete_question), getString(R.string.delete_dialog_text), currentCity.getCityNameCountry()));
-		dialogBuilder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() { 
-		    @Override
-		    public void onClick(DialogInterface dialog, int which) {
-		        dialog.dismiss();
-		    }
-		});
-		dialogBuilder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() { 
-		    @Override
-		    public void onClick(DialogInterface dialog, int which) {
-		    	new DeleteCurrentCity().execute(null, null, null);
-		        dialog.dismiss();
-		    }
-		});
-		AlertDialog dialog = dialogBuilder.create();
-		dialog.show();
-	}
+    public void deleteDialogPositive(){
+        new DeleteCurrentCity().execute(null, null, null);
+    }
+	private void showDeleteFragmentDialog(){
+        DeleteCityDialog.newInstance(currentCity.getCityNameCountry()).show(getSupportFragmentManager(), DELETE_DIALOG_KEY);
+    }
 	/* 
 	 * Making city favorite, updating UI, notification and widget. 
 	 */
@@ -313,13 +283,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	 * AsyncTask classes for Getting data from content provider, 
 	 * updating data and for delete current city.
 	 */
-	private BroadcastReceiver serviceReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			String mess = intent.getStringExtra(GetWeatherService.EXTRA_RESULT_MESSAGE);
-			showToast(mess);
-		}
-	};
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
@@ -441,7 +404,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		@Override
 		protected void onPostExecute(Boolean param) {
 			if(param){
-				currentCity = null;
+                currentCity = null;
+                restartLoader(CITY_LOADER);
 			} else {
 				showToast(getString(R.string.toast_cant_delete));
 			}

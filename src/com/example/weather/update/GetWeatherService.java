@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.widget.Toast;
 
 import com.example.weather.Notification;
 import com.example.weather.R;
@@ -102,6 +103,7 @@ public class GetWeatherService extends Service {
 			intent.putExtra(GetWeatherService.EXTRA_RESULT_BOOL, serviceResult);
 			intent.putExtra(GetWeatherService.EXTRA_RESULT_MESSAGE, message);
 			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+            showToast(message);
 		}
 	}
 
@@ -109,4 +111,8 @@ public class GetWeatherService extends Service {
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
+
+    private void showToast(String text) {
+        Toast.makeText(getBaseContext(), text, Toast.LENGTH_LONG).show();
+    }
 }

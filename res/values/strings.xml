@@ -26,6 +26,8 @@
 	
 	<string name="delete_dialog_title">Delete city</string>
 	<string name="delete_dialog_text">Do you want to delete </string>
+    <string name="delete_dialog_ok">OK</string>
+    <string name="delete_dialog_cancel">Cancel</string>
 	<string name="search_dialog_text">Searching…</string>
 	
 	<string name="toast_cant_make_favourite">Can`t make this city favourite.</string>
