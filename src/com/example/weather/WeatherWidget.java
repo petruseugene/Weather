@@ -35,8 +35,8 @@ public class WeatherWidget extends AppWidgetProvider {
 	
 	public static void updateWidget(Context context) {
 		RemoteViews views = getAndUpdateRemoteViews(context);
-		AppWidgetManager mgr = AppWidgetManager.getInstance(context);
-		mgr.updateAppWidget(new ComponentName(context.getPackageName(), WeatherWidget.class.getName()), views);
+		AppWidgetManager mngr = AppWidgetManager.getInstance(context);
+		mngr.updateAppWidget(new ComponentName(context.getPackageName(), WeatherWidget.class.getName()), views);
 	}
 
 }

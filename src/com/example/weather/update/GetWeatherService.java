@@ -93,7 +93,7 @@ public class GetWeatherService extends Service {
 	
 	private void getPreferences() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		forecastLength = prefs.getInt(SettingsActivity.PREF_FORECAST_LENGTH, forecastLength);
+		forecastLength = Integer.parseInt(prefs.getString(SettingsActivity.PREF_FORECAST_LENGTH, forecastLength+""));
 		showNotifications = prefs.getBoolean(SettingsActivity.PREF_SHOW_NOTIFICATIONS, true);
 	}
 	
